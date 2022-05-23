@@ -34,7 +34,7 @@ unus = ['[unused{}]'.format(x) for x in range(200,800)]
 pos_token = ['@@']
 pos_token.extend([f'[pos_{x}]' for x in range(512)])
 pos_token.append('##')
-tokenizer_ = BertTokenizer.from_pretrained('vocab.txt')
+tokenizer_ = BertTokenizer.from_pretrained('./configs/vocab.txt')
 postoken_dict = {}
 for x,y in zip(unus, pos_token):
     un_index = tokenizer_.vocab[x]
@@ -160,12 +160,10 @@ def finetune(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, devi
 @torch.no_grad()
 def grounding_test(model, data_loader, tokenizer, device, config, dataname=None):
     #test
-    model=model.eval()
+    model.eval()
     test_results = []
     results = []
-    metric_logger = utils.MetricLogger(delimiter="  ")
-    metric_logger.add_meter('loss_mlm', utils.SmoothedValue(window_size=50, fmt='{value:.4f}'))
-    for i, (image, text, bbox, imgs_wh, file_names) in enumerate(data_loader):
+    for i, (image, text, bbox, imgs_wh) in enumerate(data_loader):
         image = image.to(device,non_blocking=True)  
         text_input = tokenizer(text, padding='longest', truncation=True, max_length=300, return_tensors="pt").to(device) 
         image_embeds = model.visual_encoder(image)
@@ -173,21 +171,16 @@ def grounding_test(model, data_loader, tokenizer, device, config, dataname=None)
         input_ids = text_input.input_ids.clone()
         labels = input_ids.clone()
         probability_matrix = torch.full(labels.shape, model.mlm_probability)
-        input_ids, labels, masked_indices = model.postoken_mask(input_ids, model.text_encoder.config.vocab_size,\
-                                    image.device, 0, targets=labels,
-                                    probability_matrix = probability_matrix)
+        input_ids, labels, masked_indices = model.postoken_mask(input_ids, targets=labels, probability_matrix = probability_matrix)
         mlm_output = model.text_encoder(input_ids, 
-                                    attention_mask = text_input.attention_mask,
-                                    encoder_hidden_states = image_embeds,
-                                    encoder_attention_mask = image_atts,      
-                                    return_dict = True,
-                                    labels = labels)
-        loss_mlm = mlm_output.loss     
+                                        attention_mask = text_input.attention_mask,
+                                        encoder_hidden_states = image_embeds,
+                                        encoder_attention_mask = image_atts,      
+                                        return_dict = True,)
         masked_indices = masked_indices.cpu()
         pos_logits = mlm_output.logits.detach().cpu()[masked_indices][:,postoken_index].view(-1,4,512)
-        metric_logger.update(loss_mlm=loss_mlm.item())
         res = []        
-        for x,y,m,name,seq in zip(pos_logits, bbox, imgs_wh, file_names, text):
+        for x,y,m in zip(pos_logits, bbox, imgs_wh):
             assert x.shape[0]==4
             img_h = m[1]
             img_w = m[0]  
@@ -256,7 +249,7 @@ def main(args, config):
     pos_token.extend([f'[pos_{x}]' for x in range(512)])
     pos_token.append('##')
     postoken_dict = {}
-    tokenizer = BertTokenizer.from_pretrained('configs/vocab.txt')
+    tokenizer = BertTokenizer.from_pretrained('./configs/vocab.txt')
     for x,y in zip(unus, pos_token):
         un_index = tokenizer.vocab[x]
         tokenizer.vocab[y] = un_index
@@ -307,96 +300,106 @@ def main(args, config):
          
         model_without_ddp = model.module    
     
+    if args.train:
+        print("Start training")
+        start_time = time.time()
+        for epoch in range(start_epoch, max_epoch):
+            if epoch>0:
+                lr_scheduler.step(epoch+warmup_steps)  
 
-    print("Start training")
-    start_time = time.time()
-    for epoch in range(start_epoch, max_epoch):
-        if epoch>0:
-            lr_scheduler.step(epoch+warmup_steps)  
+            if args.pretrain:
+                train_stats = pretrain(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device, lr_scheduler, config, postoken_index) 
+            else:
+                train_stats = finetune(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device, lr_scheduler, config, postoken_index)
 
-        if args.pretrain:
-            train_stats = pretrain(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device, lr_scheduler, config, postoken_index) 
-        else:
-            train_stats = finetune(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device, lr_scheduler, config, postoken_index)
+            if utils.is_main_process():  
+                log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
+                            'epoch': epoch,
+                            }                     
+                save_obj = {
+                    'model': model_without_ddp.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                    'lr_scheduler': lr_scheduler.state_dict(),
+                    'config': config,
+                    'epoch': epoch,
+                }
+                torch.save(save_obj, os.path.join(args.output_dir, 'grounding_checkpoint_%02d.pth'%epoch))  
+                
+                with open(os.path.join(args.output_dir, "log.txt"),"a") as f:
+                    f.write(json.dumps(log_stats) + "\n")
 
-        if utils.is_main_process():  
-            log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
-                         'epoch': epoch,
-                        }                     
-            save_obj = {
-                'model': model_without_ddp.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'lr_scheduler': lr_scheduler.state_dict(),
-                'config': config,
-                'epoch': epoch,
-            }
-            torch.save(save_obj, os.path.join(args.output_dir, 'grounding_checkpoint_%02d.pth'%epoch))  
-            
-            with open(os.path.join(args.output_dir, "log.txt"),"a") as f:
-                f.write(json.dumps(log_stats) + "\n")
+            if torch.distributed.get_rank() == 0:
+                val_model = model.module
+                if args.test_dataset == 'refcoco':
+                    print('.....................REFCOCO VAL BEGIN VAL.....................')
+                    val_dataset = [Grounding_eval_dataset(config['refcoco_val'], config['image_res']) ]
+                    val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
+                    grounding_test(val_model, val_data_loader, tokenizer, device, config)
 
+                elif args.test_dataset == 'refcocog':
+                    print('.....................REFCOCOG VAL BEGIN EVAL.....................')
+                    val_dataset = [Grounding_eval_dataset(config['refcocog_val'], config['image_res']) ]
+                    val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
+                    grounding_test(val_model, val_data_loader, tokenizer, device, config)
+
+                elif args.test_dataset == 'refcocop':
+                    print('.....................REFCOCO+ VAL BEGIN EVAL.....................')
+                    val_dataset = [Grounding_eval_dataset(config['refcocop_val'], config['image_res']) ]
+                    val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
+                    grounding_test(val_model, val_data_loader, tokenizer, device, config)
+
+                elif args.test_dataset == 'flickr':
+                    print('.....................FLICKR EVAL.....................') 
+                    val_dataset = [Grounding_eval_dataset(config['flickr_val'], config['image_res']) ]
+                    val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
+                    grounding_test(val_model, val_data_loader, tokenizer, device, config,) 
+
+            dist.barrier() 
+        total_time = time.time() - start_time
+        total_time_str = str(datetime.timedelta(seconds=int(total_time)))
+        print('Training time {}'.format(total_time_str)) 
+    else:
         if torch.distributed.get_rank() == 0:
             val_model = model.module
             if args.test_dataset == 'refcoco':
-                print('.....................REFCOCO VAL BEGIN VAL.....................')
-                val_dataset = [Grounding_eval_dataset(config['refcoco_val'], config['image_res']) ]
-                val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
-                grounding_test(val_model, val_data_loader, tokenizer, device, config)
-                
-                print('.....................REFCOCO TESTA BEGIN VAL.....................')
+                print('.....................REFCOCO TESTA BEGIN EVAL.....................')
                 val_dataset = [Grounding_eval_dataset(config['refcoco_testA'], config['image_res']) ]
                 val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
                 grounding_test(val_model, val_data_loader, tokenizer, device, config) 
         
-                print('.....................REFCOCO TESTB BEGIN VAL.....................')
+                print('.....................REFCOCO TESTB BEGIN EVAL.....................')
                 val_dataset = [Grounding_eval_dataset(config['refcoco_testB'], config['image_res']) ]
                 val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
                 grounding_test(val_model, val_data_loader, tokenizer, device, config) 
 
             elif args.test_dataset == 'refcocog':
-                print('.....................REFCOCOG VAL BEGIN VAL.....................')
+                print('.....................REFCOCOG VAL BEGIN EVAL.....................')
                 val_dataset = [Grounding_eval_dataset(config['refcocog_val'], config['image_res']) ]
                 val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
                 grounding_test(val_model, val_data_loader, tokenizer, device, config)
                 
-                print('.....................REFCOCOG TEST BEGIN VAL.....................')
+                print('.....................REFCOCOG TEST BEGIN EVAL.....................')
                 val_dataset = [Grounding_eval_dataset(config['refcocog_test'], config['image_res']) ]
                 val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
                 grounding_test(val_model, val_data_loader, tokenizer, device, config) 
 
             elif args.test_dataset == 'refcocop':
-                print('.....................REFCOCO+ VAL BEGIN VAL.....................')
-                val_dataset = [Grounding_eval_dataset(config['refcocop_val'], config['image_res']) ]
-                val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
-                grounding_test(val_model, val_data_loader, tokenizer, device, config)
-                
-                print('.....................REFCOCO+ TESTA BEGIN VAL.....................')
+                print('.....................REFCOCO+ TESTA BEGIN EVAL.....................')
                 val_dataset = [Grounding_eval_dataset(config['refcocop_testA'], config['image_res']) ]
                 val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
                 grounding_test(val_model, val_data_loader, tokenizer, device, config)
                 
-                print('.....................REFCOCO+ TESTB BEGIN VAL.....................')
+                print('.....................REFCOCO+ TESTB BEGIN EVAL.....................')
                 val_dataset = [Grounding_eval_dataset(config['refcocop_testB'], config['image_res']) ]
                 val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
                 grounding_test(val_model, val_data_loader, tokenizer, device, config)
 
             elif args.test_dataset == 'flickr':
-                print('.....................FLICKR VAL.....................') 
-                val_dataset = [Grounding_eval_dataset(config['flickr_val'], config['image_res']) ]
-                val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
-                grounding_test(val_model, val_data_loader, tokenizer, device, config,) 
-
                 test_dataset = [Grounding_eval_dataset(config['flickr_test'], config['image_res']) ]
                 test_data_loader = create_loader(test_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
-                print('.....................FLICKR TEST.........................')
+                print('.....................FLICKR TEST EVAL.........................')
                 grounding_test(val_model, test_data_loader, tokenizer, device, config,) 
 
-        dist.barrier() 
-
-    total_time = time.time() - start_time
-    total_time_str = str(datetime.timedelta(seconds=int(total_time)))
-    print('Training time {}'.format(total_time_str)) 
-    
             
 
 if __name__ == '__main__':
@@ -417,6 +420,7 @@ if __name__ == '__main__':
     parser.add_argument('--test_before', default=0, type=int)
     parser.add_argument('--test_all', default=0, type=int)
     parser.add_argument('--pretrain', default=0, type=int)
+    parser.add_argument('--train', default=1, type=int)
     
 
     args = parser.parse_args()

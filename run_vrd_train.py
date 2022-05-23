@@ -255,7 +255,7 @@ def main(args, config):
     pos_token.append('##')
     pos_token.append('[unrel]')
     postoken_dict = {}
-    tokenizer = BertTokenizer.from_pretrained('configs/vocab.txt')
+    tokenizer = BertTokenizer.from_pretrained('./configs/vocab.txt')
     for x,y in zip(unus, pos_token):
         un_index = tokenizer.vocab[x]
         tokenizer.vocab[y] = un_index

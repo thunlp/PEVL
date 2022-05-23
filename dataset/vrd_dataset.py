@@ -55,7 +55,7 @@ class VRD_train_dataset(Dataset):
         bbox_list = bbox_list.tolist()
         ann['bbox_list'] = bbox_list.copy()
         ann['not_crop_bbox_list'] = bbox_list.copy()
-        image, ann = self.aug_transform.random_aug(image, ann, do_hori=True, do_aug=False, img_res=self.img_res)
+        image, ann, _ = self.aug_transform.random_aug(image, ann, do_hori=True, do_aug=False, img_res=self.img_res)
         obj_name_bbox_dict = {}
         assert len(ann['gt_classes']) == len(ann['bbox_list'])
         for index, name, bbox in zip(range(len(ann['gt_classes'])), ann['gt_classes'], ann['bbox_list']):

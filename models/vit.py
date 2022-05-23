@@ -1,3 +1,4 @@
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -139,7 +140,7 @@ class VisionTransformer(nn.Module):
                 drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer)
             for i in range(depth)])
         self.norm = norm_layer(embed_dim)
-        self.head = torch.nn.Linear(768, 1000, bias=True)
+
         trunc_normal_(self.pos_embed, std=.02)
         trunc_normal_(self.cls_token, std=.02)
         self.apply(self._init_weights)
@@ -170,7 +171,7 @@ class VisionTransformer(nn.Module):
         for i,blk in enumerate(self.blocks):
             x = blk(x, register_blk==i)
         x = self.norm(x)
-        x = self.head(x[:,0])
+        
         return x
 
 

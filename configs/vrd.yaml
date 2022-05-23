@@ -1,14 +1,16 @@
-train_file: ['data/vrd_train.json']
-vg_dict_path: 'data/VG-SGG-dicts-with-attri.json'
-val_gt_file: 'data/vrd_val_gts.json'
-val_file: 'data/vrd_val.pk'
-test_gt_file: 'data/vrd_test_gts.json'
-test_file: 'data/vrd_test.pk'
+train_file: ['./vrd_data/vrd_train.json']
+vg_dict_path: './vrd_data/VG-SGG-dicts-with-attri.json'
+val_gt_file: './vrd_data/vrd_val_gts.json'
+val_file: './vrd_data/vrd_val.pk'
+test_gt_file: './vrd_data/vrd_test_gts.json'
+test_file: './vrd_data/vrd_test.pk'
+vg_root: '' #path of visual genome images
 
 alpha: 0.4
 temp: 0.07
-batch_size: 16
-bert_config: 'configs/config_bert.json'
+vision_width: 768
+batch_size: 8
+bert_config: './configs/config_bert.json'
 embed_dim: 256
 exp_decay_ratio: 0.25
 image_res: 512

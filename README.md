@@ -35,16 +35,25 @@ We conduct second stage pre-training and fine-tuning for all downstream tasks.
 1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/grounding.pth"> Second stage pre-trained checkpoint </a> for position output tasks.
 2. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_grounding_data.tar.gz"> Dataset json files for position output downstream tasks</a>.(the 'file_name' in each json file need to be changed to your own directory)
 3. In configs/visual_grounding.yaml, set the paths for the json files.
-4. Fine-tuning the model:
+4. Fine-tuning the model using 4 V100 GPUs:
 ```bash
 ##RefCOCO:
-python -m torch.distributed.launch --nproc_per_node=4 --master_port=12451 --use_env PEVL/run_grounding_train.py --pretrain 0 --test_dataset refcoco --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcoco --checkpoint grounding.pth 
+###train
+python -m torch.distributed.launch --nproc_per_node=4 --master_port=12451 --use_env run_grounding_train.py --train 1 --pretrain 0 --test_dataset refcoco --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcoco --checkpoint grounding.pth
+###evaluate
+python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env run_grounding_train.py --train 0  --pretrain 0 --test_dataset refcoco --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcoco_test --checkpoint [Finetuned checkpoint]
 
 ##RefCOCOg
-python -m torch.distributed.launch --nproc_per_node=4 --master_port=12451 --use_env PEVL/run_grounding_train.py --pretrain 0 --test_dataset refcocog --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcocog --checkpoint grounding.pth
+###train
+python -m torch.distributed.launch --nproc_per_node=4 --master_port=12451 --use_env run_grounding_train.py --train 1  --pretrain 0 --test_dataset refcocog --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcocog --checkpoint grounding.pth
+###evalute
+python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env run_grounding_train.py --train 0  --pretrain 0 --test_dataset refcocog --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcocog_test --checkpoint [Finetuned checkpoint]
 
 ##RefCOCO+
-python -m torch.distributed.launch --nproc_per_node=4 --master_port=12451 --use_env PEVL/run_grounding_train.py --pretrain 0 --test_dataset refcocop --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcocop --checkpoint grounding.pth
+###train
+python -m torch.distributed.launch --nproc_per_node=4 --master_port=12451 --use_env run_grounding_train.py --train 1  --pretrain 0 --test_dataset refcocop --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcocop --checkpoint grounding.pth
+###evalute
+python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env run_grounding_train.py --train 0  --pretrain 0 --test_dataset refcocop --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcocop_test --checkpoint [Finetuned checkpoint]
 
 ```
 
@@ -52,23 +61,27 @@ python -m torch.distributed.launch --nproc_per_node=4 --master_port=12451 --use_
 1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/grounding.pth"> Second stage pre-trained checkpoint </a> for position output tasks.
 2. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_grounding.tar.gz"> Dataset json files for position output downstream tasks</a>.(the 'file_name' in each json file need to be changed to your own directory)
 3. In configs/visual_grounding.yaml, set the paths for the json files.
-4. Fine-tuning the model:
+4. Fine-tuning the model using 8 V100 GPUs:
 ```bash
 ##Flickr30k
-python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_env PEVL/run_grounding_train.py --pretrain 0 --test_dataset flickr --config ./configs/visual_grounding.yaml --output_dir ./output/phrase_grounding --checkpoint grounding.pth 
+###train
+python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_env run_grounding_train.py --train 1 --pretrain 0 --test_dataset flickr --config ./configs/visual_grounding.yaml --output_dir ./output/phrase_grounding --checkpoint grounding.pth 
+###evalute
+python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_env run_grounding_train.py --train 0 --pretrain 0 --test_dataset flickr --config ./configs/visual_grounding.yaml --output_dir ./output/phrase_grounding --checkpoint  [Finetuned checkpoint]
+
 ```
 
 #### Visual Relation Detection
 1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/vrd.pth"> Second stage pre-trained checkpoint </a> for position output tasks.
 2. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vrd.tar.gz"> Dataset json files for position output downstream tasks</a>.(the 'file_name' in each json file need to be changed to your own directory)
 3. In configs/visual_grounding.yaml, set the paths for the json files.
-4. Fine-tuning the model:
+4. Fine-tuning the model using 8 V100 GPUs:
 ```bash
 ##for finetuning on visual genome:
-python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_env PEVL/run_vrd_train.py --train 1 --pretrain 0 --config ./configs/vrd.yaml --output_dir ./output/vrd --checkpoint vrd.pth
+python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_env run_vrd_train.py --train 1 --pretrain 0 --mode finetune --config ./configs/vrd.yaml --output_dir ./output/vrd --checkpoint vrd.pth
 
 ##for evaluation on visual genome:
-python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env PEVL/run_vrd_train.py --train 0 --pretrain 0 --config ./configs/vrd.yaml  --checkpoint [Finetuned checkpoint]
+python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env run_vrd_train.py --train 0 --pretrain 0 --config ./configs/vrd.yaml  --checkpoint [Finetuned checkpoint]
 ```
 
 ### Acknowledgement

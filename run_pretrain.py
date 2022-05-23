@@ -177,7 +177,7 @@ def main(args, config):
     pos_token.extend([f'[pos_{x}]' for x in range(512)])
     pos_token.append('##')
     postoken_dict = {}
-    tokenizer = BertTokenizer.from_pretrained('configs/vocab.txt')
+    tokenizer = BertTokenizer.from_pretrained('../configs/vocab.txt')
     for x,y in zip(unus, pos_token):
         un_index = tokenizer.vocab[x]
         tokenizer.vocab[y] = un_index

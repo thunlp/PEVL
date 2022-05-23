@@ -111,7 +111,7 @@ class Grounding_eval_dataset(Dataset):
             else:
                 new_caption.append(x)
         caption = ' '.join(new_caption)
-        caption = pre_caption(caption, self.max_words)
+        caption = pre_caption(caption, 500)
         if 'bbox' in ann:
             bbox = torch.tensor(ann['bbox'],dtype=torch.float32) 
         elif 'gt_bbox' in ann:
