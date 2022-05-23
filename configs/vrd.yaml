@@ -1,0 +1,24 @@
+train_file: ['data/vrd_train.json']
+vg_dict_path: 'data/VG-SGG-dicts-with-attri.json'
+val_gt_file: 'data/vrd_val_gts.json'
+val_file: 'data/vrd_val.pk'
+test_gt_file: 'data/vrd_test_gts.json'
+test_file: 'data/vrd_test.pk'
+
+alpha: 0.4
+temp: 0.07
+batch_size: 16
+bert_config: 'configs/config_bert.json'
+embed_dim: 256
+exp_decay_ratio: 0.25
+image_res: 512
+mlm_probability: 0.15
+momentum: 0.995
+pos_token_mask_type: 1
+postoken_temp: 2
+pseudo_normal_ratio: 1
+queue_size: 65536
+optimizer: {opt: adamW, lr: 2e-5, weight_decay: 0.02}
+schedular: {sched: cosine, lr: 2e-5, epochs: 5, min_lr: 6e-6, decay_rate: 1, warmup_lr: 1e-5, warmup_epochs: 5, cooldown_epochs: 0}
+
+
