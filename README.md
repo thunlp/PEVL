@@ -8,16 +8,8 @@ This repository is currently under construction and will support pre-training on
 
 PEVL enhances the pre-training and prompt tuning of VLP models with explicit object position modeling. Specifically, PEVL reformulates discretized object positions and language in a unified language modeling framework, which facilitates explicit VL alignment during pre-training, and also enables flexible prompt tuning for various downstream tasks. 
 
-### Requirements
-- apex 0.1
-- timm 0.5.4
-- yaml 0.2.5
-- CUDA 11.1
-- numpy 1.21.5
-- pytorch 1.8.0
-- torchvision 0.9.0
-- transformers 4.8.1
-- Python 3.7.11
+### Install
+Please refer to [INSTALL](INSTALL.md).
 
 ### Pretraining Instructions
 Before pretraining, we initialize PEVL's weights with the parameters of **[ALBEF\[14M\]](https://storage.googleapis.com/sfr-pcl-data-research/ALBEF/ALBEF.pth)**
