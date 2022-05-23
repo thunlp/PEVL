@@ -2,7 +2,7 @@
 
 This is the official PyTorch implementation of the <a href="https://openreview.net/forum?id=Sg_xKgWgG9">PEVL paper</a>. PEVL show big gains of detector-free VLP models on position-sensitive tasks such as referring expression comprehension and phrase grounding, and also improves the performance on position-insensitive tasks with grounded inputs such as visual commomsense reasoning, visual relation detection and visual question answering(GQA).
 
-This repository is currently under construction and will support pre-training on custom image-text datasets and datasets with object annotations, as well as fine-tuning on phrase grounding task (Flickr30k), referring expression comprehension (RefCOCO, RefCOCO+ and RefCOCOg), visual relation detection, visual commonsense reasoning and question answering(GQA).
+This repository is currently under construction and will support pre-training on custom image-text datasets and datasets with object annotations, as well as fine-tuning on phrase grounding task (Flickr30k), referring expression comprehension (RefCOCO, RefCOCO+ and RefCOCOg), visual relation detection, visual commonsense reasoning and visual question answering(GQA).
 
 <img src="img.png" width="800">
 
