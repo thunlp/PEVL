@@ -68,7 +68,7 @@ python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_
 python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_env PEVL/run_vrd_train.py --train 1 --pretrain 0 --config ./configs/vrd.yaml --output_dir ./output/vrd --checkpoint vrd.pth
 
 ##for evaluation on visual genome:
-python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_env PEVL/run_vrd_train.py --train 0 --pretrain 0 --config ./configs/vrd.yaml  --checkpoint [Finetuned checkpoint]
+python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env PEVL/run_vrd_train.py --train 0 --pretrain 0 --config ./configs/vrd.yaml  --checkpoint [Finetuned checkpoint]
 ```
 
 ### Acknowledgement
