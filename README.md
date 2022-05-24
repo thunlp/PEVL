@@ -25,7 +25,7 @@ We conduct second stage pre-training and fine-tuning for all downstream tasks.
 
 ### Referring Expression Comprehension
 1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/grounding.pth"> Second stage pre-trained checkpoint </a> for position output tasks.
-2. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_grounding_data.tar.gz"> Dataset json files for visual relation detection</a>.(the 'file_name' in each json file need to be changed to your own directory)
+2. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_grounding_data.tar.gz"> Dataset json files for position output downstream tasks</a>.(the 'file_name' in each json file need to be changed to your own directory)
 3. In configs/visual_grounding.yaml, set the paths for the json files.
 4. Fine-tuning the model using 4 V100 GPUs:
 ```bash
@@ -64,8 +64,8 @@ python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_
 ```
 
 ### Visual Relation Detection
-1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/vrd.pth"> Second stage pre-trained checkpoint </a> for position output tasks.
-2. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vrd.tar.gz"> Dataset json files for position output downstream tasks</a>.(the 'file_name' in each json file need to be changed to your own directory)
+1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/vrd.pth"> Second stage pre-trained checkpoint </a> for visual relation detection.
+2. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vrd.tar.gz"> Dataset json files for visual relation detection</a>.(the 'file_name' in each json file need to be changed to your own directory)
 3. In configs/visual_grounding.yaml, set the paths for the json files.
 4. Fine-tuning the model using 8 V100 GPUs:
 ```bash
