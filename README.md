@@ -59,7 +59,7 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 ###train
 python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_env run_grounding_train.py --train 1 --pretrain 0 --test_dataset flickr --config ./configs/visual_grounding.yaml --output_dir ./output/phrase_grounding --checkpoint grounding.pth 
 ###evalute
-python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_env run_grounding_train.py --train 0 --pretrain 0 --test_dataset flickr --config ./configs/visual_grounding.yaml --output_dir ./output/phrase_grounding --checkpoint  [Finetuned checkpoint]
+python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env run_grounding_train.py --train 0 --pretrain 0 --test_dataset flickr --config ./configs/visual_grounding.yaml --output_dir ./output/phrase_grounding --checkpoint  [Finetuned checkpoint]
 
 ```
 
