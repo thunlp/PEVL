@@ -75,6 +75,16 @@ python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_
 ##for evaluation on visual genome:
 python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env run_vrd_train.py --train 0 --pretrain 0 --config ./configs/vrd.yaml  --checkpoint [Finetuned checkpoint]
 ```
+##Citations
+If you find this project helps your research, please kindly consider citing our project or papers in your publications.
+```
+@Artile{PEVL2022,
+  author={Yuan Yao, Qianyu Chen, Ao Zhang, Wei Ji, Zhiyuan Liu, Tat-Seng Chua, Maosong Sun},
+  journal={arxiv:2205.11169},
+  title={PEVL: Position-enhanced Pre-training and Prompt Tuning for Vision-language Models},
+  year={2022}
+}
+```
 
 ## Acknowledgement
 The implementation of PEVL relies on resources from <a href="https://github.com/salesforce/ALBEF">ALBEF</a> especially, <a href="https://github.com/huggingface/transformers">Huggingface Transformers</a>, and <a href="https://github.com/rwightman/pytorch-image-models/tree/master/timm">timm</a>. We thank the original authors for their open-sourcing and excellent work.
