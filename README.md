@@ -78,7 +78,7 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 
 
 ## Citations
-If you find this project helps your research, please kindly consider citing our project or papers in your publications.
+If you find this project helps your research, please kindly consider citing our paper in your publications.
 ```
 @Artile{PEVL2022,
   author={Yuan Yao, Qianyu Chen, Ao Zhang, Wei Ji, Zhiyuan Liu, Tat-Seng Chua, Maosong Sun},
