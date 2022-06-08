@@ -80,10 +80,10 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 ## Citations
 If you find this project helps your research, please kindly consider citing our paper in your publications.
 ```
-@Artile{PEVL2022,
-  author={Yuan Yao, Qianyu Chen, Ao Zhang, Wei Ji, Zhiyuan Liu, Tat-Seng Chua, Maosong Sun},
-  journal={arxiv:2205.11169},
+@article{yao2022pevl,
   title={PEVL: Position-enhanced Pre-training and Prompt Tuning for Vision-language Models},
+  author={Yao, Yuan and Chen, Qianyu and Zhang, Ao and Ji, Wei and Liu, Zhiyuan and Chua, Tat-Seng and Sun, Maosong},
+  journal={arXiv preprint arXiv:2205.11169},
   year={2022}
 }
 ```
