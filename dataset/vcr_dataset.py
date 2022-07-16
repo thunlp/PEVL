@@ -18,7 +18,7 @@ from dataset.randaugment import RandomAugment
 
 pos_dict = {x:f"[pos_{x}]" for x in range(512)}
 class VCR_train_dataset(Dataset):
-    def __init__(self, ann_file, max_words=200, resize_ratio=0.25, img_res=256):        
+    def __init__(self, ann_file, max_words=200, resize_ratio=0.25, img_res=256, data_load_mode='pevl'):        
         self.ann = []
         for f in ann_file:
             self.ann += json.load(open(f,'r'))
@@ -273,8 +273,111 @@ class VCR_train_dataset(Dataset):
         return image, vcr_right_qa_seq, img_id
 
 
+class VCR_test_dataset(Dataset):
+    def __init__(self, ann_file, img_res, dataload_mode, max_words=500):
+        self.ann=[]
+        self.img_res=img_res
+        self.dataload_mode = dataload_mode
+        self.position_token_dict = {x:f"[pos_{x}]" for x in range(512)}
+        for x in ann_file:
+            self.ann += json.load(open(f))
+        self.max_words = max_words
+        normalize = transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711))
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+            normalize,
+        ])
+    
+    def __len__(self):
+        return len(self.ann)
 
+    def resize_bbox(self, bbox, h, w):
+        x_min = bbox[0]
+        y_min = bbox[1]
+        x_max = bbox[2]
+        y_max = bbox[3] 
+        x1 = max(int(x_min * w,), 0)
+        y1 = max(int(y_min * h,), 0)
+        x2 = min(int(x_max * w,), 511)
+        y2 = min(int(y_max * h,), 511)
+        return [x1, y1, x2, y2]
+    
+    def make_pseudo_pos_seq(self, name, bbox, img_h, img_w):
+        if self.dataload_mode=='pevl':
+            hh = 512/int(img_h)
+            ww = 512/int(img_w)
+            bbox_xyxy_resize = self.resize_bbox(bbox, hh, ww)
+            pos_seq = [name,' @@ ' ]
+            pos_seq.extend([self.position_token_dict[m] for m in bbox_xyxy_resize])
+            pos_seq.append(' ## ')
+            pseudo_seq = ' '.join(pos_seq)
+            return pseudo_seq
+        elif self.dataload_mode=='albef':
+            pseudo_seq = name
+            return pseudo_seq
 
+    def __getitem__(self, index):
+        ann = self.ann[index].copy()
+        image = Image.open(ann['file_name']).convert('RGB')
+        ann_bbox_list = []
+        for x in ann['bbox_list']:
+            ann_bbox_list.append(x[:4])
+        ann['bbox_list'] = ann_bbox_list
+        bbox_list = torch.as_tensor(ann['bbox_list'], dtype=torch.float32).clamp(min=0)
+        w, h = image.size
+        max_size = torch.as_tensor([w, h], dtype=torch.float32)
+        cropped_boxes = torch.min(bbox_list.reshape(-1, 2, 2), max_size)
+        ann['bbox_list'] = cropped_boxes.reshape(-1,4).numpy().tolist()
+        image, ann = resize(image, ann, (self.img_res,self.img_res))
+        image = self.final_transform(image)
+        bbox_dict = {}
+        for index, (bbox, name) in enumerate(zip(ann['bbox_list'], ann['names'])):
+            bbox_dict[index] = {'bbox':bbox, 'name':name}  
+        normal_question = ann['question']
+        normal_answer_list = ann['answer_choices'] if "answer_choices" in ann else ann["rationale_choices"]
+        img_w = ann['width']
+        img_h = ann['height']
+        assert int(img_w) == self.img_res
+        assert int(img_h) == self.img_res
+        pseudo_question_list = []
+        test_seq_list = []
+        for question_token in normal_question:
+            if isinstance(question_token, list):
+                for obj_index in question_token:
+                    name = bbox_dict[obj_index]['name']
+                    bbox = bbox_dict[obj_index]['bbox']
+                    pseudo_seq = self.make_pseudo_pos_seq(name, bbox, img_h, img_w)
+                    pseudo_question_list.append(pseudo_seq)
+            else:
+                pseudo_question_list.append(question_token)
+        for normal_answer in normal_answer_list:
+            pseudo_answer = []
+            for answer_token in normal_answer:
+                if isinstance(answer_token, list):
+                    for obj_index in answer_token:
+                        name = bbox_dict[obj_index]['name']
+                        bbox = bbox_dict[obj_index]['bbox']
+                        pseudo_seq = self.make_pseudo_pos_seq(name, bbox, img_h, img_w)
+                        pseudo_answer.append(pseudo_seq)
+                else:
+                    pseudo_answer.append(answer_token)
+            pseudo_question = ' '.join(pseudo_question_list)
+            pseudo_question = pre_question(pseudo_question,1000).replace('[sep]','[SEP]').split(' ')
+            pseudo_answer = ' '.join(pseudo_answer)
+            pseudo_answer = pre_question(pseudo_answer, 1000).split(' ')
+            vcr_caption = []
+            vcr_caption.extend(pseudo_question)
+            vcr_caption.append('[SEP]')
+            vcr_caption.extend(pseudo_answer)
+            vcr_caption_seq = ' '.join(vcr_caption)
+            vcr_caption_seq = pre_question(vcr_caption_seq, self.max_words)
+            test_seq_list.append(vcr_caption_seq)
+        label = ann["answer_label"] if "answer_label" in ann else ann["rationale_label"]
+        label = torch.tensor(label)
+        image= image.view((1,3,self.img_res,self.img_res))
+        image = torch.cat([image,image,image,image],dim=0)
+        return image, test_seq_list, label, ann['annot_id']
+        
 def computeIoU(box1, box2):
     # each box is of [x1, y1, w, h]
     inter_x1 = max(box1[0], box2[0])
