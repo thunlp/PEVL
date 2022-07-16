@@ -44,6 +44,7 @@ class VCR_train_dataset(Dataset):
 
     def __len__(self):
         return len(self.ann)
+        
     def __getitem__(self, index):   
         ann = self.ann[index].copy()
         image = Image.open(ann['file_name']).convert('RGB')
@@ -103,7 +104,7 @@ class VCR_train_dataset(Dataset):
         else:
             image, target, do_horizontal = self.aug_transform.random_aug(image, target, False)
         vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
-        vcr_right_qa_seq += ' [yeschoice] '
+        # vcr_right_qa_seq += ' [yeschoice] '
         img_id = self.imgid_dict[ann['file_name']]
         if do_horizontal:
             img_id = self.hori_imgid_dict[ann['file_name']]
@@ -121,7 +122,7 @@ class VCR_train_dataset(Dataset):
         else:
             image, target, do_horizontal = self.aug_transform.random_aug(image, target, False)
         vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
-        vcr_right_qa_seq += ' [yeschoice] '
+        # vcr_right_qa_seq += ' [yeschoice] '
         img_id = self.imgid_dict[ann['file_name']]
         if do_horizontal:
             img_id = self.hori_imgid_dict[ann['file_name']]
@@ -138,7 +139,7 @@ class VCR_train_dataset(Dataset):
         else:
             image, target, do_horizontal = self.aug_transform.random_aug(image, target, False)
         vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
-        vcr_right_qa_seq += ' [nochoice] '
+        # vcr_right_qa_seq += ' [nochoice] '
         img_id = -100
         if do_horizontal:
             image, vcr_right_qa_seq, img_id, self.hori_imgid_dict[ann['file_name']]
@@ -156,7 +157,7 @@ class VCR_train_dataset(Dataset):
         else:
             image, target, do_horizontal = self.aug_transform.random_aug(image, target, False)
         vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
-        vcr_right_qa_seq += ' [nochoice] '
+        # vcr_right_qa_seq += ' [nochoice] '
         img_id = -100
         if do_horizontal:
             image, vcr_right_qa_seq, img_id, self.hori_imgid_dict[ann['file_name']]
@@ -183,10 +184,10 @@ class VCR_train_dataset(Dataset):
         vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
         if do_bbox_neg_gen:
             img_id = -100
-            vcr_right_qa_seq += '  [nochoice] '
+            # vcr_right_qa_seq += '  [nochoice] '
         else:
             img_id = self.imgid_dict[ann['file_name']]
-            vcr_right_qa_seq += ' [yeschoice] '
+            # vcr_right_qa_seq += ' [yeschoice] '
         return image, vcr_right_qa_seq, img_id
     def make_hard_negative_same_obj_QAR(self, image, ann):
         target = ann.copy()
@@ -211,10 +212,10 @@ class VCR_train_dataset(Dataset):
         vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
         if do_bbox_neg_gen:
             img_id = -100
-            vcr_right_qa_seq += ' [nochoice] '
+            # vcr_right_qa_seq += ' [nochoice] '
         else:
             img_id = self.imgid_dict[ann['file_name']]
-            vcr_right_qa_seq += '  [yeschoice] '
+            # vcr_right_qa_seq += '  [yeschoice] '
         return image, vcr_right_qa_seq, img_id
     def make_hard_negative_diff_obj_QA(self, image, ann):
         target = ann.copy()
@@ -238,10 +239,10 @@ class VCR_train_dataset(Dataset):
         vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
         if do_bbox_neg_gen:
             img_id = -100
-            vcr_right_qa_seq += ' [nochoice] '
+            # vcr_right_qa_seq += ' [nochoice] '
         else:
             img_id = self.imgid_dict[ann['file_name']]
-            vcr_right_qa_seq += ' [yeschoice] '
+            # vcr_right_qa_seq += ' [yeschoice] '
         return image, vcr_right_qa_seq, img_id
     def make_hard_negative_diff_obj_QAR(self, image, ann):
         target = ann.copy()
@@ -266,10 +267,10 @@ class VCR_train_dataset(Dataset):
         vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
         if do_bbox_neg_gen:
             img_id = -100
-            vcr_right_qa_seq += '  [nochoice] '
+            # vcr_right_qa_seq += '  [nochoice] '
         else:
             img_id = self.imgid_dict[ann['file_name']]
-            vcr_right_qa_seq += '  [yeschoice] '
+            # vcr_right_qa_seq += '  [yeschoice] '
         return image, vcr_right_qa_seq, img_id
 
 

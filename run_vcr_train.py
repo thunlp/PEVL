@@ -94,7 +94,7 @@ def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, dev
             else:
                 alpha = config['alpha']*min(1,i/len(vcr_data_loader)) 
             
-            loss_mlm, loss_soft, loss_ita, loss_itm = model(images, text, alpha, itm_labels, mode='pretrain')  
+            loss_mlm, loss_soft, loss_ita, loss_itm = model(images, text, alpha, itm_labels, mode='finetuning')  
                 
             loss = loss_mlm + loss_ita + loss_itm + loss_soft 
             
@@ -185,7 +185,7 @@ def main(args, config):
             m_pos_embed_reshaped = interpolate_pos_embed(state_dict['visual_encoder_m.pos_embed'],model.visual_encoder_m)  
             state_dict['visual_encoder.pos_embed'] = pos_embed_reshaped       
             state_dict['visual_encoder_m.pos_embed'] = m_pos_embed_reshaped               
-        model.load_state_dict(state_dict)    
+        model.load_state_dict(state_dict, strict=False)    
         print('load checkpoint from %s'%args.checkpoint)
 
     model_without_ddp = model
