@@ -1,6 +1,6 @@
-train_vcr_file: ['/mnt/sfs_turbo/chenqianyu/vcr/2022_01_06_vcr_pretrain_prompt_data.json',] 
-train_val_vcr_q2a_file: ['/mnt/sfs_turbo/chenqianyu/vcr/pevl_vcr_itm_finetune_val_QA_data.json']
-train_val_vcr_qa2r_file: ['/mnt/sfs_turbo/chenqianyu/vcr/pevl_vcr_itm_finetune_val_QAR_data.json']
+train_vcr_file: ['./2022_01_06_vcr_pretrain_prompt_data.json'] 
+train_val_vcr_q2a_file: ['./pevl_vcr_itm_finetune_val_QA_data.json']
+train_val_vcr_qa2r_file: ['./pevl_vcr_itm_finetune_val_QAR_data.json']
 
 alpha: 0.4
 temp: 0.07
