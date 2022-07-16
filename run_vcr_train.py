@@ -18,7 +18,7 @@ from models.tokenization_bert import BertTokenizer
 from dataset import create_sampler, create_loader
 from scheduler import create_scheduler
 from optim import create_optimizer
-from utils.eval import vcr_validate
+from eval.eval import vcr_validate
 from models.model_vcr import PEVL_VCR
 from dataset.vcr_dataset import VCR_test_dataset, VCR_train_dataset
 
