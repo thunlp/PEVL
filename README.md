@@ -100,7 +100,7 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 
 
 ### Visual Commonsense Reasoning
-1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr.tar.gz"> Dataset json files for visual commonsense reasoning</a>.(the 'file_name' in each json file need to be changed to your own directory)
+1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr.tar.gz"> Dataset json files for visual commonsense reasoning</a>.
 2. In configs/vcr.yaml, set the paths for the json files.
 
 
