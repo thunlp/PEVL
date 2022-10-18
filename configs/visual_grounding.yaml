@@ -1,5 +1,5 @@
 refcoco_train_file: ['./grounding/refcoco_train.json',] 
-refcoco_val_file: ['./grounding/refcoco_val.json']
+refcoco_val: ['./grounding/refcoco_val.json']
 refcoco_testA: ['./grounding/refcoco_testA.json']
 refcoco_testB: ['./grounding/refcoco_testB.json']
 refcocog_train_file: ['./grounding/refcocog_train.json',]
