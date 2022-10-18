@@ -3,8 +3,9 @@
 This is the official PyTorch implementation of the EMNLP 2022 paper "[PEVL: Position-enhanced Pre-training and Prompt Tuning for Vision-language Models](https://arxiv.org/abs/2205.11169)".
 
 ## Recent Updates
-- [x] 2022.05.21 Update PEVL for grounding, VRD codes and second stage pre-trained checkpoint.
+- [x] 2022.05.21 Update PEVL for grounding, VRD codes and second stage pre-trained models.
 - [x] 2022.08.16 Train PEVL code for VCR tasks.
+
 ## Quick links
 
 - [PEVL](#pevl)
@@ -41,7 +42,7 @@ Our raw pretraining corpus is from **[Visual Commonsense Reasoning(VCR)](https:/
 
 
 ## Second Stage Pre-training and Fine-tuning
-
+You can download our first-stage pre-training model from **[pre-trained pevl]](https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_pretrain.pth)**
 We conduct second stage pre-training and fine-tuning for all downstream tasks.
 
 ### Referring Expression Comprehension
@@ -97,6 +98,19 @@ python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_
 python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env run_vrd_train.py --train 0 --pretrain 0 --config ./configs/vrd.yaml  --checkpoint [Finetuned checkpoint]
 ```
 
+
+### Visual Commonsense Reasoning
+1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/vrd.pth"> Second stage pre-trained checkpoint </a> for visual relation detection.
+1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vrd.tar.gz"> Dataset json files for visual commonsense reasoning</a>.(the 'file_name' in each json file need to be changed to your own directory)
+3. In configs/visual_grounding.yaml, set the paths for the json files.
+4. Fine-tuning the model using 8 V100 GPUs:
+```bash
+##for finetuning on visual genome:
+python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_env run_vrd_train.py --train 1 --pretrain 0 --mode finetune --config ./configs/vrd.yaml --output_dir ./output/vrd --checkpoint vrd.pth
+
+##for evaluation on visual genome:
+python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env run_vrd_train.py --train 0 --pretrain 0 --config ./configs/vrd.yaml  --checkpoint [Finetuned checkpoint]
+```
 
 ## Citations
 If you find this project helps your research, please kindly consider citing our paper in your publications.
