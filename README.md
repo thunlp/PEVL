@@ -1,12 +1,30 @@
-# PEVL: Position-enhanced Pre-training and Prompt Tuning for Vision-language Models
+# PEVL
 
-This is the official PyTorch implementation of the <a href="https://arxiv.org/abs/2205.11169">PEVL paper</a>. PEVL shows big gains of detector-free VLP models on position-sensitive tasks such as referring expression comprehension and phrase grounding, and also improves the performance on position-insensitive tasks with grounded inputs such as visual commomsense reasoning, visual relation detection and visual question answering(GQA).
+This is the official PyTorch implementation of the EMNLP 2022 paper "[PEVL: Position-enhanced Pre-training and Prompt Tuning for Vision-language Models](https://arxiv.org/abs/2205.11169)".
+
+## Quick links
+
+- [PEVL](#pevl)
+  - [Quick links](#quick-links)
+  - [Overview](#overview)
+  - [Install](#install)
+  - [Pretraining Instructions](#pretraining-instructions)
+  - [Second Stage Pre-training and Fine-tuning](#second-stage-pre-training-and-fine-tuning)
+    - [Referring Expression Comprehension](#referring-expression-comprehension)
+    - [Phrase Grounding](#phrase-grounding)
+    - [Visual Relation Detection](#visual-relation-detection)
+  - [Citations](#citations)
+  - [Acknowledgement](#acknowledgement)
+
+
+## Overview
+PEVL shows big gains of detector-free VLP models on position-sensitive tasks such as referring expression comprehension and phrase grounding, and also improves the performance on position-insensitive tasks with grounded inputs such as visual commomsense reasoning, visual relation detection and visual question answering(GQA).
 
 This repository is currently under construction and will support pre-training on custom image-text datasets and datasets with object annotations, as well as fine-tuning on phrase grounding task (Flickr30k), referring expression comprehension (RefCOCO, RefCOCO+ and RefCOCOg), visual relation detection, visual commonsense reasoning and visual question answering(GQA).
 
-<img src="img.png" width="800">
-
 PEVL enhances the pre-training and prompt tuning of VLP models with explicit object position modeling. Specifically, PEVL reformulates discretized object positions and language in a unified language modeling framework, which facilitates explicit VL alignment during pre-training, and also enables flexible prompt tuning for various downstream tasks. 
+
+<img src="img.png" width="800">
 
 ## Install
 Please refer to [INSTALL](INSTALL.md).
