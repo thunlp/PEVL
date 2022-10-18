@@ -96,7 +96,7 @@ def pretrain(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, devi
         else:
             alpha = config['alpha']*min(1,i/len(data_loader)) 
         
-        loss_soft, loss_ita, loss_itm = model(image, text_input, epoch, postoken_index, alpha = alpha)  
+        loss_soft, loss_ita, loss_itm = model(image, text_input, alpha = alpha)  
         loss = loss_soft + loss_ita+loss_itm
         loss.backward()
         optimizer.step() 
@@ -133,14 +133,13 @@ def finetune(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, devi
     for i, (image, text) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
         optimizer.zero_grad()
         image = image.to(device,non_blocking=True) 
-        print(image.shape)
         text_input = tokenizer(text, padding='longest', truncation=True, max_length=300, return_tensors="pt").to(device)  
         if epoch>0:
             alpha = config['alpha']
         else:
             alpha = config['alpha']*min(1,i/len(data_loader)) 
         
-        loss = model(image, text_input, epoch, postoken_index, alpha = alpha, mode='finetune')  
+        loss = model(image, text_input, alpha = alpha, mode='finetune')  
         loss.backward()
 
         optimizer.step() 
