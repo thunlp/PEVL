@@ -43,7 +43,8 @@ Our raw pretraining corpus is from **[Visual Commonsense Reasoning(VCR)](https:/
 
 
 ## Second Stage Pre-training and Fine-tuning
-You can download our first-stage pre-training model from **[pre-trained pevl](https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_pretrain.pth)**
+You can download our first-stage pre-training model from **[pre-trained pevl](https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_pretrain.pth)**.
+
 We conduct second stage pre-training and fine-tuning for all downstream tasks.
 
 ### Referring Expression Comprehension
