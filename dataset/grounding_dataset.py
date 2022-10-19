@@ -1,3 +1,9 @@
+# This file is code for making dataset for visual grounding tasks.
+# Author: Qianyu Chen
+# Date: 2022-10
+ 
+# Copyright (c) THUNLP, Tsinghua University. All rights reserved. 
+# See LICENSE file in the project root for license information.
 import os
 import re
 import PIL
