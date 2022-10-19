@@ -1,5 +1,5 @@
 '''
-# This file is code for conduct second-stage pretraining, fine-tuning, and evaluation for visual relation detection.
+# This file is code for conducting second-stage pretraining, fine-tuning, and evaluation for visual relation detection.
 # Author: Qianyu Chen
 # Date: 2022-10
  
