@@ -1,4 +1,4 @@
-# This file is code for conduct second-stage pretraining, fine-tuning, and evaluation for visual commonsense reasoning.
+# This file is code for conducting second-stage pretraining, fine-tuning, and evaluation for visual commonsense reasoning.
 # Author: Qianyu Chen
 # Date: 2022-10
  
