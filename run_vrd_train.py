@@ -1,8 +1,10 @@
 '''
- * Copyright (c) 2021, salesforce.com, inc.
- * All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause
- * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
+# This file is code for conduct second-stage pretraining, fine-tuning, and evaluation for visual relation detection.
+# Author: Qianyu Chen
+# Date: 2022-10
+ 
+# Copyright (c) THUNLP, Tsinghua University. All rights reserved. 
+# See LICENSE file in the project root for license information.
 '''
 
 import argparse
