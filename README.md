@@ -60,13 +60,13 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 ##RefCOCOg
 ###train
 python -m torch.distributed.launch --nproc_per_node=4 --master_port=12451 --use_env run_grounding_train.py --train 1  --pretrain 0 --test_dataset refcocog --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcocog --checkpoint grounding.pth
-###evalute
+###evaluate
 python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env run_grounding_train.py --train 0  --pretrain 0 --test_dataset refcocog --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcocog_test --checkpoint [Finetuned checkpoint]
 
 ##RefCOCO+
 ###train
 python -m torch.distributed.launch --nproc_per_node=4 --master_port=12451 --use_env run_grounding_train.py --train 1  --pretrain 0 --test_dataset refcocop --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcocop --checkpoint grounding.pth
-###evalute
+###evaluate
 python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env run_grounding_train.py --train 0  --pretrain 0 --test_dataset refcocop --config ./configs/visual_grounding.yaml --output_dir ./output/visual_grounding/refcocop_test --checkpoint [Finetuned checkpoint]
 
 ```
@@ -80,7 +80,7 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 ##Flickr30k
 ###train
 python -m torch.distributed.launch --nproc_per_node=8 --master_port=12451 --use_env run_grounding_train.py --train 1 --pretrain 0 --test_dataset flickr --config ./configs/visual_grounding.yaml --output_dir ./output/phrase_grounding --checkpoint grounding.pth 
-###evalute
+###evaluate
 python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_env run_grounding_train.py --train 0 --pretrain 0 --test_dataset flickr --config ./configs/visual_grounding.yaml --output_dir ./output/phrase_grounding --checkpoint  [Finetuned checkpoint]
 
 ```
@@ -107,10 +107,10 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 ## Citations
 If you find this project helps your research, please kindly consider citing our paper in your publications.
 ```
-@article{yao2022pevl,
+@inproceedings{yao2022pevl,
   title={PEVL: Position-enhanced Pre-training and Prompt Tuning for Vision-language Models},
   author={Yao, Yuan and Chen, Qianyu and Zhang, Ao and Ji, Wei and Liu, Zhiyuan and Chua, Tat-Seng and Sun, Maosong},
-  journal={arXiv preprint arXiv:2205.11169},
+  booktitle={Proceedings of EMNLP},
   year={2022}
 }
 ```
