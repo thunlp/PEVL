@@ -55,7 +55,7 @@ class Grounding_train_dataset(Dataset):
         max_size = torch.as_tensor([w, h], dtype=torch.float32)
         cropped_boxes = torch.min(bbox_list.reshape(-1, 2, 2), max_size)
         ann['bbox_list'] = cropped_boxes.reshape(-1,4).numpy().tolist()
-        image, ann, do_horizontal = self.aug_transform.random_aug(image, ann, True, False, self.img_res)
+        image, ann, do_horizontal = self.aug_transform.random_aug(image, ann, True, True, self.img_res)
 
         assert len(ann['tokens_positive']) == len(ann['bbox_list'])
         seq = ann['normal_caption'] if 'normal_caption' in ann else ann['caption']
