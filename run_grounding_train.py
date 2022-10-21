@@ -1,9 +1,9 @@
-# This file is code for conducting fine-tuning, and evaluation for visual grounding tasks.
-# Author: Qianyu Chen
-# Date: 2022-10
- 
-# Copyright (c) THUNLP, Tsinghua University. All rights reserved. 
-# See LICENSE file in the project root for license information.
+'''
+ * Copyright (c) 2021, salesforce.com, inc.
+ * All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause
+ * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
+'''
 
 
 import os
@@ -75,7 +75,7 @@ def pretrain(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, devi
     model.train()  
     
     metric_logger = utils.MetricLogger(delimiter="  ")
-    metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
+    metric_logger.add_meter('lr', utils.SmoothedValue(window_size=500, fmt='{value:.6f}'))
     metric_logger.add_meter('loss_soft', utils.SmoothedValue(window_size=50, fmt='{value:.4f}'))
     metric_logger.add_meter('loss_ita', utils.SmoothedValue(window_size=50, fmt='{value:.4f}'))
     metric_logger.add_meter('loss_itm', utils.SmoothedValue(window_size=50, fmt='{value:.4f}'))
@@ -115,7 +115,7 @@ def pretrain(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, devi
     return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}    
     
 
-def finetune(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device, scheduler, config, postoken_index):
+def finetune(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device, scheduler, config, postoken_index, args):
     # train
     model.train()  
     
@@ -149,7 +149,9 @@ def finetune(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, devi
         
         if epoch==0 and i%step_size==0 and i<=warmup_iterations: 
             scheduler.step(i//step_size)         
-        
+        if i!=0 and i%args.eval_step==0:
+            checkpoint(args.output_dir, epoch, i, model, tokenizer, config, device)
+        dist.barrier()
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger.global_avg())     
@@ -162,39 +164,62 @@ def grounding_test(model, data_loader, tokenizer, device, config, dataname=None)
     model.eval()
     test_results = []
     results = []
-    for i, (image, text, bbox, imgs_wh) in enumerate(data_loader):
-        image = image.to(device,non_blocking=True)  
-        text_input = tokenizer(text, padding='longest', truncation=True, max_length=300, return_tensors="pt").to(device) 
-        image_embeds = model.visual_encoder(image)
-        image_atts = torch.ones(image_embeds.size()[:-1],dtype=torch.long).to(image.device)
-        input_ids = text_input.input_ids.clone()
-        labels = input_ids.clone()
-        probability_matrix = torch.full(labels.shape, model.mlm_probability)
-        input_ids, labels, masked_indices = model.postoken_mask(input_ids, targets=labels, probability_matrix = probability_matrix)
-        mlm_output = model.text_encoder(input_ids, 
-                                        attention_mask = text_input.attention_mask,
-                                        encoder_hidden_states = image_embeds,
-                                        encoder_attention_mask = image_atts,      
-                                        return_dict = True,)
-        masked_indices = masked_indices.cpu()
-        pos_logits = mlm_output.logits.detach().cpu()[masked_indices][:,postoken_index].view(-1,4,512)
-        res = []        
-        for x,y,m in zip(pos_logits, bbox, imgs_wh):
-            assert x.shape[0]==4
-            img_h = m[1]
-            img_w = m[0]  
-            res = []     
-            for n in x:
-                res.append(float(n.argmax()/512))
-            res = [res[0]*img_w, res[1]*img_h, res[2]*img_w, res[3]*img_h]
-            res = torch.tensor([res[0], res[1], res[2]-res[0]+1, res[3]-res[1]+1])
-            iou = computeIoU(res, y)
-            if iou >= 0.5:
-                results.append(iou)
-            test_results.append(iou)
-    print(len(test_results))  
-    print('grounding accuracy: ', len(results)/len(test_results))      
+    with torch.no_grad():
+        for i, (image, text, bbox, imgs_wh) in enumerate(data_loader):
+            image = image.to(device,non_blocking=True)  
+            text_input = tokenizer(text, padding='longest', truncation=True, max_length=300, return_tensors="pt").to(device) 
+            image_embeds = model.visual_encoder(image)
+            image_atts = torch.ones(image_embeds.size()[:-1],dtype=torch.long).to(image.device)
+            input_ids = text_input.input_ids.clone()
+            labels = input_ids.clone()
+            probability_matrix = torch.full(labels.shape, model.mlm_probability)
+            input_ids, labels, masked_indices = model.postoken_mask(input_ids, targets=labels, probability_matrix = probability_matrix)
+            mlm_output = model.text_encoder(input_ids, 
+                                            attention_mask = text_input.attention_mask,
+                                            encoder_hidden_states = image_embeds,
+                                            encoder_attention_mask = image_atts,      
+                                            return_dict = True,)
+            masked_indices = masked_indices.cpu()
+            pos_logits = mlm_output.logits.detach().cpu()[masked_indices][:,postoken_index].view(-1,4,512)
+            res = []        
+            for x,y,m in zip(pos_logits, bbox, imgs_wh):
+                assert x.shape[0]==4
+                img_h = m[1]
+                img_w = m[0]  
+                res = []     
+                for n in x:
+                    res.append(float(n.argmax()/512))
+                res = [res[0]*img_w, res[1]*img_h, res[2]*img_w, res[3]*img_h]
+                res = torch.tensor([res[0], res[1], res[2]-res[0]+1, res[3]-res[1]+1])
+                iou = computeIoU(res, y)
+                if iou >= 0.5:
+                    results.append(iou)
+                test_results.append(iou)
+        print(len(test_results))  
+        print('grounding accuracy: ', len(results)/len(test_results))      
 
+def checkpoint(output_dir, epoch, step, model, tokenizer, config, device):
+    if utils.is_main_process():
+        val_model = model.module
+        print('\n\n++++++++++++++++++++++++++++++++++++++++++++++++')
+        print('REFCOCO VAL:')
+        grounding_test(val_model, refcoco_val_data_loader, tokenizer, device, config)
+        print('REFCOCO TESTA:')
+        grounding_test(val_model, refcoco_testa_data_loader, tokenizer, device, config) 
+        print('REFCOCO TESTB')
+        grounding_test(val_model, refcoco_testb_data_loader, tokenizer, device, config)
+        print('++++++++++++++++++++++++++++++++++++++++++++++++\n\n')                 
+        save_obj = {
+            'model': val_model.state_dict(),
+        }
+        torch.save(save_obj, os.path.join(output_dir, 'checkpoint_{}_{}.pth'.format(epoch, step)))
+
+refcoco_val_dataset = [Grounding_eval_dataset(['./grounding/refcoco_val.json'], 512) ]
+refcoco_val_data_loader = create_loader(refcoco_val_dataset,[None],batch_size=[96], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
+refcoco_testa_dataset = [Grounding_eval_dataset(['./grounding/refcoco_testA.json'], 512) ]
+refcoco_testa_data_loader = create_loader(refcoco_testa_dataset,[None],batch_size=[96], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
+refcoco_testb_dataset = [Grounding_eval_dataset(['./grounding/refcoco_testB.json'], 512) ]
+refcoco_testb_data_loader = create_loader(refcoco_testb_dataset,[None],batch_size=[96], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
 
 
 def main(args, config):
@@ -309,7 +334,7 @@ def main(args, config):
             if args.pretrain:
                 train_stats = pretrain(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device, lr_scheduler, config, postoken_index) 
             else:
-                train_stats = finetune(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device, lr_scheduler, config, postoken_index)
+                train_stats = finetune(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device, lr_scheduler, config, postoken_index, args)
 
             if utils.is_main_process():  
                 log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
@@ -334,6 +359,15 @@ def main(args, config):
                     val_dataset = [Grounding_eval_dataset(config['refcoco_val'], config['image_res']) ]
                     val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
                     grounding_test(val_model, val_data_loader, tokenizer, device, config)
+                    print('.....................REFCOCO TESTA BEGIN EVAL.....................')
+                    val_dataset = [Grounding_eval_dataset(config['refcoco_testA'], config['image_res']) ]
+                    val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
+                    grounding_test(val_model, val_data_loader, tokenizer, device, config) 
+            
+                    print('.....................REFCOCO TESTB BEGIN EVAL.....................')
+                    val_dataset = [Grounding_eval_dataset(config['refcoco_testB'], config['image_res']) ]
+                    val_data_loader = create_loader(val_dataset,[None],batch_size=[config['test_batch_size']], num_workers=[1], is_trains=[False], collate_fns=[None])[0]
+                    grounding_test(val_model, val_data_loader, tokenizer, device, config) 
 
                 elif args.test_dataset == 'refcocog':
                     print('.....................REFCOCOG VAL BEGIN EVAL.....................')
@@ -420,7 +454,7 @@ if __name__ == '__main__':
     parser.add_argument('--test_all', default=0, type=int)
     parser.add_argument('--pretrain', default=0, type=int)
     parser.add_argument('--train', default=1, type=int)
-    
+    parser.add_argument('--eval_step', default=500, type=int)
 
     args = parser.parse_args()
 
