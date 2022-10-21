@@ -30,7 +30,7 @@ from dataset.vcr_dataset import VCR_test_dataset, VCR_train_dataset
 
 
 
-def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, device, scheduler, config, mode):
+def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, device, scheduler, config, mode, args):
     # train
     model.train()  
     if mode == 'pretrain':
@@ -73,6 +73,8 @@ def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, dev
 
             if epoch==0 and i%step_size==0 and i<=warmup_iterations: 
                 scheduler.step(i//step_size) 
+            if i%args.eval_step==0:
+                checkpoint(args.output_dir, epoch, i, model, tokenizer, config, device)
         # gather the stats from all processes
         metric_logger.synchronize_between_processes()
         print("Averaged stats:", metric_logger.global_avg())     
@@ -118,6 +120,24 @@ def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, dev
         print("Averaged stats:", metric_logger.global_avg())     
         return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()} 
 
+def checkpoint(output_dir, epoch, step, model,tokenizer, config, device):
+    if utils.is_main_process():  
+        #vcr q2a validation
+        vcr_validate(model.module, vcr_val_q2a_loader, tokenizer, device, 'Q2A')
+        #vcr qr2a validation
+        vcr_validate(model.module, vcr_val_qa2r_loader, tokenizer, device, 'QA2R')
+        log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
+                        'epoch': epoch,
+                    }                     
+        save_obj = {
+            'model': model_without_ddp.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'lr_scheduler': lr_scheduler.state_dict(),
+            'config': config,
+            'epoch': epoch,
+        }
+        torch.save(save_obj, os.path.join(output_dir, 'checkpoint_{}_{}.pth'.format(epoch, step)))
+
 
 def main(args, config):
     utils.init_distributed_mode(args)    
@@ -137,9 +157,9 @@ def main(args, config):
 
     #### Dataset #### 
     print("Creating dataset")
-    vcr_train_datasets = [VCR_train_dataset(config['train_vcr_file'], img_res=config['image_res'])]
-    vcr_val_q2a_dataset = [VCR_test_dataset(config['train_val_vcr_q2a_file'], img_res=config['image_res'], dataload_mode=config[''])]
-    vcr_val_qa2r_dataset = [VCR_test_dataset(config['train_val_vcr_qa2r_file'], img_res=config['image_res'], dataload_mode=config[''])]
+    vcr_train_datasets = [VCR_train_dataset(config['train_vcr_file'], img_res=config['image_res'], image_path=config['image_path'])]
+    vcr_val_q2a_dataset = [VCR_test_dataset(config['train_val_vcr_q2a_file'], img_res=config['image_res'], dataload_mode=config[''], image_path=config['image_path'])]
+    vcr_val_qa2r_dataset = [VCR_test_dataset(config['train_val_vcr_qa2r_file'], img_res=config['image_res'], dataload_mode=config[''], image_path=config['image_path'])]
     if args.distributed:
         num_tasks = utils.get_world_size()
         global_rank = utils.get_rank() 
@@ -207,7 +227,7 @@ def main(args, config):
         if epoch>0:
             lr_scheduler.step(epoch+warmup_steps)  
             
-        train_stats = train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, device, lr_scheduler, config, args.mode)
+        train_stats = train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, device, lr_scheduler, config, args.mode, args)
         if utils.is_main_process():  
             log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                          'epoch': epoch,
@@ -251,6 +271,7 @@ if __name__ == '__main__':
     parser.add_argument('--distributed', default=True, type=bool)
     parser.add_argument('--training_mode', default='pretrain')
     parser.add_argument('--dataload_mode', default='pevl')
+    parser.add_argument('--eval_steps', default=1, type=int, help='Number of update steps between two evaluations') 
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
@@ -260,3 +281,5 @@ if __name__ == '__main__':
     yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))    
     
     main(args, config)
+    
+    
