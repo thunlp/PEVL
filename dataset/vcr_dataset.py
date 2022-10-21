@@ -1,10 +1,3 @@
-# This file is code for making dataset for visual commonsense reasoning tasks.
-# Author: Qianyu Chen
-# Date: 2022-10
- 
-# Copyright (c) THUNLP, Tsinghua University. All rights reserved. 
-# See LICENSE file in the project root for license information.
-
 import json
 import os
 import random
@@ -25,11 +18,11 @@ from dataset.randaugment import RandomAugment
 
 pos_dict = {x:f"[pos_{x}]" for x in range(512)}
 class VCR_train_dataset(Dataset):
-    def __init__(self, ann_file, max_words=200, resize_ratio=0.25, img_res=256, data_load_mode='pevl'):        
+    def __init__(self, ann_file, image_path, max_words=200, resize_ratio=0.25, img_res=256, data_load_mode='pevl'):        
         self.ann = []
         for f in ann_file:
             self.ann += json.load(open(f,'r'))
-
+        self.image_path=image_path
         self.img_res = img_res
         self.pos_dict = {x:f"[pos_{x}]" for x in range(512)}
         self.max_words = max_words
@@ -54,7 +47,8 @@ class VCR_train_dataset(Dataset):
         
     def __getitem__(self, index):   
         ann = self.ann[index].copy()
-        image = Image.open(ann['file_name']).convert('RGB')
+        file_name = os.path.join(self.image_path, ann['file_name'])
+        image = Image.open(file_name).convert('RGB')
         ann_bbox_list = []
         for x in ann['bbox_list']:
             ann_bbox_list.append(x[:4])
@@ -110,7 +104,7 @@ class VCR_train_dataset(Dataset):
             image, target, do_horizontal = self.aug_transform.random_aug(image, target)
         else:
             image, target, do_horizontal = self.aug_transform.random_aug(image, target, False)
-        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
+        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words, self.img_res)
         # vcr_right_qa_seq += ' [yeschoice] '
         img_id = self.imgid_dict[ann['file_name']]
         if do_horizontal:
@@ -128,7 +122,7 @@ class VCR_train_dataset(Dataset):
             image, target, do_horizontal = self.aug_transform.random_aug(image, target)
         else:
             image, target, do_horizontal = self.aug_transform.random_aug(image, target, False)
-        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
+        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words, self.img_res)
         # vcr_right_qa_seq += ' [yeschoice] '
         img_id = self.imgid_dict[ann['file_name']]
         if do_horizontal:
@@ -145,7 +139,7 @@ class VCR_train_dataset(Dataset):
             image, target, do_horizontal = self.aug_transform.random_aug(image, target)
         else:
             image, target, do_horizontal = self.aug_transform.random_aug(image, target, False)
-        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
+        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words, self.img_res)
         # vcr_right_qa_seq += ' [nochoice] '
         img_id = -100
         if do_horizontal:
@@ -163,7 +157,7 @@ class VCR_train_dataset(Dataset):
             image, target, do_horizontal = self.aug_transform.random_aug(image, target)
         else:
             image, target, do_horizontal = self.aug_transform.random_aug(image, target, False)
-        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
+        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words, self.img_res)
         # vcr_right_qa_seq += ' [nochoice] '
         img_id = -100
         if do_horizontal:
@@ -188,7 +182,7 @@ class VCR_train_dataset(Dataset):
             image, target, do_horizontal = self.aug_transform.random_aug(image, target)
         else:
             image, target, do_horizontal = self.aug_transform.random_aug(image, target, False)
-        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
+        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words, self.img_res)
         if do_bbox_neg_gen:
             img_id = -100
             # vcr_right_qa_seq += '  [nochoice] '
@@ -216,7 +210,7 @@ class VCR_train_dataset(Dataset):
             image, target, do_horizontal = self.aug_transform.random_aug(image, target)
         else:
             image, target, do_horizontal = self.aug_transform.random_aug(image, target, False)
-        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
+        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words, self.img_res)
         if do_bbox_neg_gen:
             img_id = -100
             # vcr_right_qa_seq += ' [nochoice] '
@@ -243,7 +237,7 @@ class VCR_train_dataset(Dataset):
             image, target, do_horizontal = self.aug_transform.random_aug(image, target)
         else:
             image, target, do_horizontal = self.aug_transform.random_aug(image, target, False)
-        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
+        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words, self.img_res)
         if do_bbox_neg_gen:
             img_id = -100
             # vcr_right_qa_seq += ' [nochoice] '
@@ -271,7 +265,7 @@ class VCR_train_dataset(Dataset):
             image, target, do_horizontal = self.aug_transform.random_aug(image, target)
         else:
             image, target, do_horizontal = self.aug_transform.random_aug(image, target, False)
-        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words)
+        vcr_right_qa_seq = pseudo_seq_gen(target, do_horizontal, self.max_words, self.img_res)
         if do_bbox_neg_gen:
             img_id = -100
             # vcr_right_qa_seq += '  [nochoice] '
@@ -282,13 +276,14 @@ class VCR_train_dataset(Dataset):
 
 
 class VCR_test_dataset(Dataset):
-    def __init__(self, ann_file, img_res, dataload_mode, max_words=500):
+    def __init__(self, ann_file, img_res, dataload_mode, image_path, max_words=500):
         self.ann=[]
+        self.image_path=image_path
         self.img_res=img_res
         self.dataload_mode = dataload_mode
         self.position_token_dict = {x:f"[pos_{x}]" for x in range(512)}
         for x in ann_file:
-            self.ann += json.load(open(f))
+            self.ann += json.load(open(x))
         self.max_words = max_words
         normalize = transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711))
         self.transform = transforms.Compose([
@@ -326,7 +321,8 @@ class VCR_test_dataset(Dataset):
 
     def __getitem__(self, index):
         ann = self.ann[index].copy()
-        image = Image.open(ann['file_name']).convert('RGB')
+        file_name = os.path.join(self.image_path, ann['file_name'])
+        image = Image.open(file_name).convert('RGB')
         ann_bbox_list = []
         for x in ann['bbox_list']:
             ann_bbox_list.append(x[:4])
@@ -337,7 +333,7 @@ class VCR_test_dataset(Dataset):
         cropped_boxes = torch.min(bbox_list.reshape(-1, 2, 2), max_size)
         ann['bbox_list'] = cropped_boxes.reshape(-1,4).numpy().tolist()
         image, ann = resize(image, ann, (self.img_res,self.img_res))
-        image = self.final_transform(image)
+        image = self.transform(image)
         bbox_dict = {}
         for index, (bbox, name) in enumerate(zip(ann['bbox_list'], ann['names'])):
             bbox_dict[index] = {'bbox':bbox, 'name':name}  
@@ -427,7 +423,7 @@ def make_pseudo_pos_seq(name, bbox, img_h, img_w):
     return pseudo_seq
 
 
-def pseudo_seq_gen(ann, do_horizontal, max_words):
+def pseudo_seq_gen(ann, do_horizontal, max_words, img_res):
     ann = ann.copy()
     bbox_dict = {}
     normal_question = ann['question']
@@ -437,10 +433,8 @@ def pseudo_seq_gen(ann, do_horizontal, max_words):
     bbox_dict = {}
     for index, (bbox, name) in enumerate(zip(ann['bbox_list'], ann['names'])):
         bbox_dict[index] = {'bbox':bbox, 'name':name} 
-    # assert int(img_w) == 384
-    # assert int(img_h) == 384
-    assert int(img_w) == 256
-    assert int(img_h) == 256
+    assert int(img_w) == img_res
+    assert int(img_h) == img_res
     pseudo_question = []
     pseudo_answer = []
     pseudo_rationale = []
@@ -534,7 +528,7 @@ def target_update(target, bbox_dict):
 
 
 class Augfunc(object):
-    def __init__(self, resize_ratio=0.25, img_res=img_res):
+    def __init__(self, resize_ratio=0.25, img_res=None):
         self.resize_ratio = resize_ratio
         self.img_res = img_res
         max_size=1333
