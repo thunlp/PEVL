@@ -1,9 +1,3 @@
-# This file is code for conducting second-stage pretraining, fine-tuning, and evaluation for visual commonsense reasoning.
-# Author: Qianyu Chen
-# Date: 2022-10
- 
-# Copyright (c) THUNLP, Tsinghua University. All rights reserved. 
-# See LICENSE file in the project root for license information.
 import argparse
 import os
 import random
@@ -30,7 +24,7 @@ from dataset.vcr_dataset import VCR_test_dataset, VCR_train_dataset
 
 
 
-def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, device, scheduler, config, mode, args):
+def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, device, scheduler, config, mode, args, vcr_val_q2a_loader, vcr_val_qa2r_loader):
     # train
     model.train()  
     if mode == 'pretrain':
@@ -74,7 +68,7 @@ def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, dev
             if epoch==0 and i%step_size==0 and i<=warmup_iterations: 
                 scheduler.step(i//step_size) 
             if i%args.eval_step==0:
-                checkpoint(args.output_dir, epoch, i, model, tokenizer, config, device)
+                checkpoint(args.output_dir, epoch, i, model, tokenizer, config, device, vcr_val_q2a_loader, vcr_val_qa2r_loader)
         # gather the stats from all processes
         metric_logger.synchronize_between_processes()
         print("Averaged stats:", metric_logger.global_avg())     
@@ -120,7 +114,7 @@ def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, dev
         print("Averaged stats:", metric_logger.global_avg())     
         return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()} 
 
-def checkpoint(output_dir, epoch, step, model,tokenizer, config, device):
+def checkpoint(output_dir, epoch, step, model, tokenizer, config, device, vcr_val_q2a_loader, vcr_val_qa2r_loader):
     if utils.is_main_process():  
         #vcr q2a validation
         vcr_validate(model.module, vcr_val_q2a_loader, tokenizer, device, 'Q2A')
@@ -130,11 +124,7 @@ def checkpoint(output_dir, epoch, step, model,tokenizer, config, device):
                         'epoch': epoch,
                     }                     
         save_obj = {
-            'model': model_without_ddp.state_dict(),
-            'optimizer': optimizer.state_dict(),
-            'lr_scheduler': lr_scheduler.state_dict(),
-            'config': config,
-            'epoch': epoch,
+            'model': model.module.state_dict(),
         }
         torch.save(save_obj, os.path.join(output_dir, 'checkpoint_{}_{}.pth'.format(epoch, step)))
 
@@ -158,8 +148,9 @@ def main(args, config):
     #### Dataset #### 
     print("Creating dataset")
     vcr_train_datasets = [VCR_train_dataset(config['train_vcr_file'], img_res=config['image_res'], image_path=config['image_path'])]
-    vcr_val_q2a_dataset = [VCR_test_dataset(config['train_val_vcr_q2a_file'], img_res=config['image_res'], dataload_mode=config[''], image_path=config['image_path'])]
-    vcr_val_qa2r_dataset = [VCR_test_dataset(config['train_val_vcr_qa2r_file'], img_res=config['image_res'], dataload_mode=config[''], image_path=config['image_path'])]
+    vcr_val_q2a_dataset = [VCR_test_dataset(config['train_val_vcr_q2a_file'], img_res=config['image_res'], dataload_mode=args.dataload_mode, image_path=config['image_path'])]
+    vcr_val_qa2r_dataset = [VCR_test_dataset(config['train_val_vcr_qa2r_file'], img_res=config['image_res'], dataload_mode=args.dataload_mode, image_path=config['image_path'])]
+    
     if args.distributed:
         num_tasks = utils.get_world_size()
         global_rank = utils.get_rank() 
@@ -168,15 +159,15 @@ def main(args, config):
         samplers = [None]
 
     vcr_data_loader = create_loader(vcr_train_datasets,samplers_train,batch_size=[config['batch_size']], num_workers=[4], is_trains=[True], collate_fns=[None])[0]
-    vcr_val_q2a_loader = create_loader([vcr_val_q2a_dataset], [None], batch_size=[config['test_batch_size']], num_workers=[4], is_trains=[False], collate_fns=[None])[0]
-    vcr_val_qa2r_loader = create_loader([vcr_val_qa2r_dataset], [None], batch_size=[config['test_batch_size']], num_workers=[4], is_trains=[False], collate_fns=[None])[0]
+    vcr_val_q2a_loader = create_loader(vcr_val_q2a_dataset, [None], batch_size=[config['test_batch_size']], num_workers=[4], is_trains=[False], collate_fns=[None])[0]
+    vcr_val_qa2r_loader = create_loader(vcr_val_qa2r_dataset, [None], batch_size=[config['test_batch_size']], num_workers=[4], is_trains=[False], collate_fns=[None])[0]
     ##our tokenizer
     unus = ['[unused{}]'.format(x) for x in range(200,800)]
     pos_token = ['@@']
     pos_token.extend([f'[pos_{x}]' for x in range(512)])
     pos_token.append('##')
     postoken_dict = {}
-    tokenizer = BertTokenizer.from_pretrained('../configs/vocab.txt')
+    tokenizer = BertTokenizer.from_pretrained('./configs/vocab.txt')
     for x,y in zip(unus, pos_token):
         un_index = tokenizer.vocab[x]
         tokenizer.vocab[y] = un_index
@@ -226,8 +217,7 @@ def main(args, config):
     for epoch in range(start_epoch, max_epoch):
         if epoch>0:
             lr_scheduler.step(epoch+warmup_steps)  
-            
-        train_stats = train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, device, lr_scheduler, config, args.mode, args)
+        train_stats = train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, device, lr_scheduler, config, args.training_mode, args, vcr_val_q2a_loader, vcr_val_qa2r_loader)
         if utils.is_main_process():  
             log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                          'epoch': epoch,
@@ -271,7 +261,7 @@ if __name__ == '__main__':
     parser.add_argument('--distributed', default=True, type=bool)
     parser.add_argument('--training_mode', default='pretrain')
     parser.add_argument('--dataload_mode', default='pevl')
-    parser.add_argument('--eval_steps', default=1, type=int, help='Number of update steps between two evaluations') 
+    parser.add_argument('--eval_step', default=1, type=int, help='Number of update steps between two evaluations') 
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
@@ -281,5 +271,3 @@ if __name__ == '__main__':
     yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))    
     
     main(args, config)
-    
-    
