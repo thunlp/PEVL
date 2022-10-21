@@ -1,6 +1,8 @@
-train_vcr_file: ['./2022_01_06_vcr_pretrain_prompt_data.json'] 
-train_val_vcr_q2a_file: ['./pevl_vcr_itm_finetune_val_QA_data.json']
-train_val_vcr_qa2r_file: ['./pevl_vcr_itm_finetune_val_QAR_data.json']
+train_vcr_file: ['pevl_vcr_pretrain_data.json'] 
+train_val_vcr_q2a_file: ['pevl_vcr_val_QA_data.json']
+train_val_vcr_qa2r_file: ['pevl_vcr_val_QAR_data.json']
+image_path: '/data2/private/chenqianyu/pevl_images'
+file_path: '/data2/private/chenqianyu/pevl/data/vcr'
 
 alpha: 0.4
 temp: 0.07
