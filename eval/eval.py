@@ -8,7 +8,10 @@ def vcr_validate(model, data_loader, tokenzier, device, setting):
     right_count = 0.0
     for i, (images, text, labels, _) in tqdm(enumerate(data_loader)):
         images = images.to(device, non_blocking=True)
-        text = tokenzier(text, padding='longest', truncation=True, max_length=160, return_tensors="pt").to(device) 
+        text_input=[]
+        for x in text:
+            text_input.extend(x)
+        text = tokenzier(text_input, padding='longest', truncation=True, max_length=160, return_tensors="pt").to(device) 
         input_ids = text.input_ids.clone()
         labels = input_ids.clone()
         image_embeds = model.visual_encoder(images)
