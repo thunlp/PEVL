@@ -47,7 +47,7 @@ def vcr_validate(model, data_loader, tokenzier, device, setting):
     print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     # print('total num: 26534.0 test result for Q2A in VCR: 71.3%')
     print('+                                                     +')
-    print(f"+total num: {total_count} test result for {setting} in VCR: {round(right_count/total_count, 3)*100.0}%")
+    print(f" total num: {total_count} test result for {setting} in VCR: {round(right_count/total_count, 3)*100.0}%")
     print('+                                                     +')
     print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n')
 
