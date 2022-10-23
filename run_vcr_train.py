@@ -43,10 +43,11 @@ def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, dev
             vcr_data_loader.sampler.set_epoch(epoch)
 
         for i, (image, text, itm_labels) in enumerate(metric_logger.log_every(vcr_data_loader, print_freq, header)):
+            model.train()  
             optimizer.zero_grad()
             images = image.to(device,non_blocking=True) 
             itm_labels = itm_labels.view(-1)
-            text = tokenizer(text, padding='longest', truncation=True, max_length=200, return_tensors="pt").to(device)  
+            text = tokenizer(text, padding='longest', truncation=True, max_length=512, return_tensors="pt").to(device)  
             if epoch>0:
                 alpha = config['alpha']
             else:
@@ -67,8 +68,15 @@ def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, dev
 
             if epoch==0 and i%step_size==0 and i<=warmup_iterations: 
                 scheduler.step(i//step_size) 
-            if i%args.eval_step==0:
+            # if 
+
+            if (i+epoch)==0:
                 checkpoint(args.output_dir, epoch, i, model, tokenizer, config, device, vcr_val_q2a_loader, vcr_val_qa2r_loader)
+                model.train()
+            elif i%args.eval_step==0:
+                checkpoint(args.output_dir, epoch, i, model, tokenizer, config, device, vcr_val_q2a_loader, vcr_val_qa2r_loader)
+                model.train()
+            dist.barrier()
         # gather the stats from all processes
         metric_logger.synchronize_between_processes()
         print("Averaged stats:", metric_logger.global_avg())     
@@ -115,18 +123,17 @@ def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, dev
         return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()} 
 
 def checkpoint(output_dir, epoch, step, model, tokenizer, config, device, vcr_val_q2a_loader, vcr_val_qa2r_loader):
-    if utils.is_main_process():  
-        #vcr q2a validation
-        vcr_validate(model.module, vcr_val_q2a_loader, tokenizer, device, 'Q2A')
-        #vcr qr2a validation
-        vcr_validate(model.module, vcr_val_qa2r_loader, tokenizer, device, 'QA2R')
-        log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
-                        'epoch': epoch,
-                    }                     
-        save_obj = {
-            'model': model.module.state_dict(),
-        }
-        torch.save(save_obj, os.path.join(output_dir, 'checkpoint_{}_{}.pth'.format(epoch, step)))
+    model.eval()
+    with torch.no_grad():
+        if utils.is_main_process():  
+            #vcr q2a validation
+            vcr_validate(model.module, vcr_val_q2a_loader, tokenizer, device, 'Q2A')
+            #vcr qr2a validation
+            # vcr_validate(model.module, vcr_val_qa2r_loader, tokenizer, device, 'QA2R')
+            save_obj = {
+                'model': model.module.state_dict(),
+            }
+            torch.save(save_obj, os.path.join(output_dir, 'checkpoint_{}_{}.pth'.format(epoch, step)))
 
 
 def main(args, config):
@@ -161,6 +168,7 @@ def main(args, config):
     vcr_data_loader = create_loader(vcr_train_datasets,samplers_train,batch_size=[config['batch_size']], num_workers=[4], is_trains=[True], collate_fns=[None])[0]
     vcr_val_q2a_loader = create_loader(vcr_val_q2a_dataset, [None], batch_size=[config['test_batch_size']], num_workers=[4], is_trains=[False], collate_fns=[None])[0]
     vcr_val_qa2r_loader = create_loader(vcr_val_qa2r_dataset, [None], batch_size=[config['test_batch_size']], num_workers=[4], is_trains=[False], collate_fns=[None])[0]
+    dist.barrier()
     ##our tokenizer
     unus = ['[unused{}]'.format(x) for x in range(200,800)]
     pos_token = ['@@']
@@ -174,6 +182,9 @@ def main(args, config):
         postoken_dict[y] = un_index
         _ = tokenizer.vocab.pop(x)
         tokenizer.basic_tokenizer.never_split.add(y)
+
+
+        
     postoken_dict.pop('@@')
     postoken_dict.pop('##')
     postoken_index = torch.randn(30522).bool()
@@ -234,12 +245,15 @@ def main(args, config):
             with open(os.path.join(args.output_dir, "log.txt"),"a") as f:
                 f.write(json.dumps(log_stats) + "\n")
         
-        dist.barrier()  
+        
         if torch.distributed.get_rank() == 0:
             #vcr q2a validation
+            model.eval()
             vcr_validate(model.module, vcr_val_q2a_loader, tokenizer, device, 'Q2A')
+        
             #vcr qr2a validation
-            vcr_validate(model.module, vcr_val_qa2r_loader, tokenizer, device, 'QA2R')
+            # vcr_validate(model.module, vcr_val_qa2r_loader, tokenizer, device, 'QA2R')
+        dist.barrier()  
             
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
@@ -271,3 +285,7 @@ if __name__ == '__main__':
     yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))    
     
     main(args, config)
+
+
+
+
