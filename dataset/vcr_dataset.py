@@ -16,12 +16,20 @@ import torchvision.transforms as T
 import torchvision.transforms.functional as F
 from dataset.randaugment import RandomAugment
 
+
+##for base64 loading
+from io import BytesIO
+import base64
+
 pos_dict = {x:f"[pos_{x}]" for x in range(512)}
 class VCR_train_dataset(Dataset):
     def __init__(self, ann_file, image_path, max_words=200, resize_ratio=0.25, img_res=256, data_load_mode='pevl'):        
         self.ann = []
         for f in ann_file:
             self.ann += json.load(open(f,'r'))
+        # self.image_file = json.load(open('/weka-jd/prod/public/permanent/group_liuzhiyuan/chenqianyu/workspaces/dataset_center/pevl/chenqianyu_vcr_images_base64.json'))
+        # print(len(self.image_file))
+        print(len(self.ann))
         self.image_path=image_path
         self.img_res = img_res
         self.pos_dict = {x:f"[pos_{x}]" for x in range(512)}
@@ -49,6 +57,8 @@ class VCR_train_dataset(Dataset):
         ann = self.ann[index].copy()
         file_name = os.path.join(self.image_path, ann['file_name'])
         image = Image.open(file_name).convert('RGB')
+        # image = self.image_file[ann['file_name']]
+        # image = Image.open(BytesIO(base64.urlsafe_b64decode(image))).convert('RGB')
         ann_bbox_list = []
         for x in ann['bbox_list']:
             ann_bbox_list.append(x[:4])
@@ -279,6 +289,7 @@ class VCR_test_dataset(Dataset):
     def __init__(self, ann_file, img_res, dataload_mode, image_path, max_words=500):
         self.ann=[]
         self.image_path=image_path
+        # self.image_file = json.load(open('/weka-jd/prod/public/permanent/group_liuzhiyuan/chenqianyu/workspaces/dataset_center/pevl/chenqianyu_vcr_images_base64.json'))
         self.img_res=img_res
         self.dataload_mode = dataload_mode
         self.position_token_dict = {x:f"[pos_{x}]" for x in range(512)}
@@ -299,6 +310,7 @@ class VCR_test_dataset(Dataset):
         y_min = bbox[1]
         x_max = bbox[2]
         y_max = bbox[3] 
+        
         x1 = max(int(x_min * w,), 0)
         y1 = max(int(y_min * h,), 0)
         x2 = min(int(x_max * w,), 511)
@@ -323,6 +335,8 @@ class VCR_test_dataset(Dataset):
         ann = self.ann[index].copy()
         file_name = os.path.join(self.image_path, ann['file_name'])
         image = Image.open(file_name).convert('RGB')
+        # image = self.image_file[ann['file_name']]
+        # image = Image.open(BytesIO(base64.urlsafe_b64decode(image))).convert('RGB')
         ann_bbox_list = []
         for x in ann['bbox_list']:
             ann_bbox_list.append(x[:4])
@@ -374,7 +388,7 @@ class VCR_test_dataset(Dataset):
             vcr_caption.append('[SEP]')
             vcr_caption.extend(pseudo_answer)
             vcr_caption_seq = ' '.join(vcr_caption)
-            vcr_caption_seq = pre_question(vcr_caption_seq, self.max_words)
+            vcr_caption_seq = pre_question(vcr_caption_seq, self.max_words).replace('[sep]','[SEP]')
             test_seq_list.append(vcr_caption_seq)
         label = ann["answer_label"] if "answer_label" in ann else ann["rationale_label"]
         label = torch.tensor(label)
@@ -400,12 +414,15 @@ def computeIoU(box1, box2):
 
 
 def resize_bbox(bbox, h, w):
+    # print(bbox)
     x_min = bbox[0]
     y_min = bbox[1]
     x_max = bbox[2]
     y_max = bbox[3] 
-    x1 = max(int(x_min * w,), 0)
-    y1 = max(int(y_min * h,), 0)
+    # x1 = max(int(x_min * w,), 0)
+    # y1 = max(int(y_min * h,), 0)
+    x1 = min(max(int(x_min * w,), 0), 511)
+    y1 = min(max(int(y_min * h,), 0), 511)
     x2 = min(int(x_max * w,), 511)
     y2 = min(int(y_max * h,), 511)
     return [x1, y1, x2, y2]
@@ -483,7 +500,8 @@ def pseudo_seq_gen(ann, do_horizontal, max_words, img_res):
     vcr_caption_seq = pre_caption(vcr_caption_seq, max_words-2)
     vcr_caption_seq = vcr_caption_seq.replace("[sep]", "[SEP]")
     if do_horizontal:
-        vcr_caption_seq = vcr_caption_seq.replace("left", "[TMP]").replace("right", "left").replace("[TMP]", "right") 
+        vcr_caption_seq = vcr_caption_seq.replace("left", "[TMP]").replace("right", "left").replace("[TMP]", "right")
+    # print(vcr_caption_seq) 
     return vcr_caption_seq 
 
 
@@ -531,11 +549,11 @@ class Augfunc(object):
     def __init__(self, resize_ratio=0.25, img_res=None):
         self.resize_ratio = resize_ratio
         self.img_res = img_res
-        max_size=1333
+        max_size=450
         normalize = transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711))
         self.random_size_crop = Compose(
                                             [
-                                                RandomResize([400, 450]),
+                                                RandomResize([400, 450, ]),
                                                 RandomSizeCrop(384, max_size),
                                             ]
                                         ) 
@@ -548,7 +566,12 @@ class Augfunc(object):
         ])
     def random_aug(self, image, ann):
         do_horizontal=False
-        image, ann = resize(image, ann, (self.img_res,self.img_res))
+        if random.random() < self.resize_ratio:
+            image, ann = resize(image, ann, (self.img_res, self.img_res))
+        else:
+            image, ann = self.random_size_crop(image, ann)
+            image, ann = resize(image, ann, (self.img_res, self.img_res))
+        # image, ann = resize(image, ann, (self.img_res,self.img_res))
         image, ann, do_horizontal = self.random_horizontal(image, ann)
         image = self.final_transform(image)
         return image, ann, do_horizontal
