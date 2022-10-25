@@ -282,7 +282,7 @@ if __name__ == '__main__':
     parser.add_argument('--training_mode', default='pretrain')
     parser.add_argument('--dataload_mode', default='pevl')
     parser.add_argument('--eval_step', default=1, type=int, help='Number of update steps between two evaluations') 
-    parser.add_argument('--gradient_accumulation_steps ', default=1, type=int, help='Number of updates steps to accumulate the gradients for, before performing a backward/update pass')
+    parser.add_argument('--gradient_accumulation_steps', default=1, type=int, help='Number of updates steps to accumulate the gradients for, before performing a backward/update pass')
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
