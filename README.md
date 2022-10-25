@@ -2,9 +2,6 @@
 
 This is the official PyTorch implementation of the EMNLP 2022 paper "[PEVL: Position-enhanced Pre-training and Prompt Tuning for Vision-language Models](https://arxiv.org/abs/2205.11169)".
 
-## Recent Updates
-- [x] 2022.05.21 Update PEVL for grounding, VRD codes and second stage pre-trained models.
-- [x] 2022.08.16 Train PEVL code for VCR tasks.
 
 ## Quick links
 
