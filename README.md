@@ -67,7 +67,7 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 
 ### Phrase Grounding
 1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/grounding.pth"> Second stage pre-trained checkpoint </a> for position output tasks.
-2. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_grounding_data.tar.gz"> Dataset json files for position output downstream tasks</a>.(the 'file_name' in each json file need to be changed to your own directory)
+2. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_grounding_data.tar.gz"> Dataset json files for position output downstream tasks</a>.
 3. In configs/visual_grounding.yaml, set the paths for the json files.
 4. Fine-tuning the model using 8 V100 GPUs:
 ```bash
@@ -79,10 +79,10 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 
 ```
 
-### Visual Relation Detection
+### Visual Relation Detection (VRD)
 1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/vrd.pth"> Second stage pre-trained checkpoint </a> for visual relation detection.
-2. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vrd.tar.gz"> Dataset json files for visual relation detection</a>.(the 'file_name' in each json file need to be changed to your own directory)
-3. In configs/visual_grounding.yaml, set the paths for the json files.
+2. Download PEVL's VRD dataset json files for visual relation detection from <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vrd.tar.gz"> pevl_vrd</a> and images for VRD from <a href="https://visualgenome.org/api/v0/api_home.html"> Visual Genome </a> . 
+3. In configs/vrd.yaml, set the paths for the json files.
 4. Fine-tuning the model using 8 V100 GPUs:
 ```bash
 ##for finetuning on visual genome:
@@ -95,11 +95,11 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 
 ### Visual Commonsense Reasoning (VCR)
 1. <a href="https://thunlp.oss-cLn-qingdao.aliyuncs.com/pevl_vcr_ssp.pth"> Second-stage pre-trained checkpoint </a> for visual commonsense reasoning.
-2. Download PEV's VCR dataset json files <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr.tar.gz"> vcr data </a> and images </a> for visual commonsense reasoning from original websites <a href="https://visualcommonsense.com/download/"> VCR </a>.
+2. Download PEVL's VCR dataset json files from <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr.tar.gz"> vcr data </a> and images for visual commonsense reasoning from original websites <a href="https://visualcommonsense.com/download/"> VCR </a>.
 3. In configs/vcr.yaml, set the paths for the json files and vcr images.
 
 ### Visual Question Answering (GQA)
-1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_gqa_data.tar.gz"> Dataset json files for visual commonsense reasoning</a>.
+1. Download PEVL's GQA dataset json files from <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_gqa_data.tar.gz"> pevl_gqa</a> and images for GQA from original websites <a href="https://cs.stanford.edu/people/dorarad/gqa/download.html"> GQA </a>
 2. In configs/gqa.yaml, set the paths for the json files and gqa images.
 
 
