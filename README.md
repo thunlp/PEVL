@@ -93,9 +93,9 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 ```
 
 
-### Visual Commonsense Reasoning
-1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr_ssp.pth"> Second-stage pre-trained checkpoint </a> for visual commonsense reasoning.
-2. Download <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr.tar.gz"> pevl's dataset json files </a> and <a href="https://visualcommonsense.com/download/"> images </a> for visual commonsense reasoning.
+### Visual Commonsense Reasoning (VCR)
+1. <a href="https://thunlp.oss-cLn-qingdao.aliyuncs.com/pevl_vcr_ssp.pth"> Second-stage pre-trained checkpoint </a> for visual commonsense reasoning.
+2. Download PEV's VCR dataset json files <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr.tar.gz"> vcr data </a> and images </a> for visual commonsense reasoning from original websites <a href="https://visualcommonsense.com/download/"> VCR </a>.
 3. In configs/vcr.yaml, set the paths for the json files and vcr images.
 
 ### Visual Question Answering (GQA)
