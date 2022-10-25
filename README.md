@@ -102,6 +102,9 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 3. In configs/vcr.yaml, set the paths for the json files and vcr images.
 
 ### Visual Question Answering (GQA)
+1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_gqa_data.tar.gz"> Dataset json files for visual commonsense reasoning</a>.
+2. In configs/gqa.yaml, set the paths for the json files and gqa images.
+
 
 ## Citations
 If you find this project helps your research, please kindly consider citing our paper in your publications.
