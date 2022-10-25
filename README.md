@@ -21,7 +21,7 @@ This is the official PyTorch implementation of the EMNLP 2022 paper "[PEVL: Posi
 
 
 ## Overview
-PEVL reformulates discretized object positions and language in a unified language modeling framework, which facilitates explicit VL alignment during pre-training, and also enables flexible prompt tuning for various downstream tasks. PEVL shows impressive results of detector-free VLP models on position-sensitive tasks such as referring expression comprehension and phrase grounding, and also improves the performance on position-insensitive tasks with grounded inputs such as visual commomsense reasoning, visual relation detection and visual question answering(GQA). For more details, please see the paper "[PEVL](https://arxiv.org/abs/2205.11169)"
+PEVL reformulates discretized object positions and language in a unified language modeling framework, which facilitates explicit VL alignment during pre-training, and also enables flexible prompt tuning for various downstream tasks. PEVL shows impressive results of detector-free VLP models on position-sensitive tasks such as referring expression comprehension and phrase grounding, and also improves the performance on position-insensitive tasks with grounded inputs such as visual commomsense reasoning, visual relation detection and visual question answering(GQA). For more details, please see the paper [PEVL](https://arxiv.org/abs/2205.11169)
 
 <img src="img.png" width="800">
 
@@ -94,8 +94,8 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 
 
 ### Visual Commonsense Reasoning
-1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr_ssp.pth"> Second stage pre-trained checkpoint </a> for visual commonsense reasoning.
-2. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr.tar.gz"> Dataset json files for visual commonsense reasoning</a>.
+1. <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr_ssp.pth"> Second-stage pre-trained checkpoint </a> for visual commonsense reasoning.
+2. Download <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr.tar.gz"> pevl's dataset json files </a> and <a href="https://visualcommonsense.com/download/"> images </a> for visual commonsense reasoning.
 3. In configs/vcr.yaml, set the paths for the json files and vcr images.
 
 ### Visual Question Answering (GQA)
