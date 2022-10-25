@@ -15,6 +15,7 @@ This is the official PyTorch implementation of the EMNLP 2022 paper "[PEVL: Posi
     - [Phrase Grounding](#phrase-grounding)
     - [Visual Relation Detection](#visual-relation-detection)
     - [Visual Commonsense Reasoning](#visual-commonsense-reasoning)
+    - [Visual Question Answering](#visual-question-answering)
   - [Citations](#citations)
   - [Acknowledgement](#acknowledgement)
 
