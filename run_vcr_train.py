@@ -98,18 +98,20 @@ def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, dev
             optimizer.zero_grad()
             images = image.to(device,non_blocking=True) 
             itm_labels = itm_labels.view(-1)
-            text = tokenizer(text, padding='longest', truncation=True, max_length=200, return_tensors="pt").to(device)  
+            text = tokenizer(text, padding='longest', truncation=True, max_length=512, return_tensors="pt").to(device)  
             if epoch>0:
                 alpha = config['alpha']
             else:
                 alpha = config['alpha']*min(1,i/len(vcr_data_loader)) 
             
-            loss_mlm, loss_soft, loss_ita, loss_itm = model(images, text, alpha, itm_labels, mode='finetuning')  
+            loss_ita, loss_itm = model(images, text, alpha, itm_labels, mode='finetuning')  
                 
-            loss = loss_mlm + loss_ita + loss_itm + loss_soft 
-            
+            loss = loss_ita + loss_itm
+            if args.gradient_accumulation_steps > 1:
+                loss = loss / args.gradient_accumulation_steps 
             loss.backward()
-            optimizer.step()   
+            if i!=0 and i%args.gradient_accumulation_steps ==0:
+                optimizer.step()   
 
             metric_logger.update(loss_ita=loss_ita.item())
             metric_logger.update(loss_itm=loss_itm.item())
@@ -117,10 +119,13 @@ def train(model, vcr_data_loader, optimizer, tokenizer, epoch, warmup_steps, dev
 
             if epoch==0 and i%step_size==0 and i<=warmup_iterations: 
                 scheduler.step(i//step_size) 
+            if i !=0 and i%args.eval_step==0:
+                checkpoint(args.output_dir, epoch, i, model, tokenizer, config, device, vcr_val_q2a_loader, vcr_val_qa2r_loader)
+                model.train()
         # gather the stats from all processes
         metric_logger.synchronize_between_processes()
         print("Averaged stats:", metric_logger.global_avg())     
-        return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()} 
+        return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}
 
 def checkpoint(output_dir, epoch, step, model, tokenizer, config, device, vcr_val_q2a_loader, vcr_val_qa2r_loader):
     model.eval()
@@ -129,7 +134,8 @@ def checkpoint(output_dir, epoch, step, model, tokenizer, config, device, vcr_va
             #vcr q2a validation
             vcr_validate(model.module, vcr_val_q2a_loader, tokenizer, device, 'Q2A')
             #vcr qr2a validation
-            # vcr_validate(model.module, vcr_val_qa2r_loader, tokenizer, device, 'QA2R')
+            vcr_validate(model.module, vcr_val_qa2r_loader, tokenizer, device, 'QA2R')
+            
             save_obj = {
                 'model': model.module.state_dict(),
             }
@@ -276,6 +282,7 @@ if __name__ == '__main__':
     parser.add_argument('--training_mode', default='pretrain')
     parser.add_argument('--dataload_mode', default='pevl')
     parser.add_argument('--eval_step', default=1, type=int, help='Number of update steps between two evaluations') 
+    parser.add_argument('--gradient_accumulation_steps ', default=1, type=int, help='Number of updates steps to accumulate the gradients for, before performing a backward/update pass')
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
