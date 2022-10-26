@@ -137,7 +137,7 @@ def main(args, config):
     #### Dataset #### 
     print("Creating dataset")
 
-    train_dataset = [GQA_train_dataset(config[args.train_file], img_res=config['image_res'], images_path=config['image_path'])]
+    train_dataset = [GQA_train_dataset(config[args.train_file], img_res=config['image_res'], image_path=config['image_path'], tokenizer=tokenizer)]
     
     if args.distributed:
         num_tasks = utils.get_world_size()
@@ -224,7 +224,7 @@ def main(args, config):
     
     if args.evaluate:
         if utils.is_main_process():
-            val_dataset = [GQA_val_dataset(config[args.eval_file], img_res=config['image_res'], images_path=config['image_path'])] 
+            val_dataset = [GQA_val_dataset(config[args.eval_file], img_res=config['image_res'], image_path=config['image_path'], tokenizer=tokenizer)] 
             val_data_loader = create_loader(val_dataset, [None], batch_size=[config['test_batch_size']], num_workers=[4], is_trains=[False], collate_fns=[None])[0]
             gqa_val(model.module, val_data_loader, tokenizer, device, config['answer_dict_path'])
     total_time = time.time() - start_time
@@ -248,6 +248,7 @@ if __name__ == '__main__':
     parser.add_argument('--distributed', default=True, type=bool)
     parser.add_argument('--find_unused_parameters', default=False, type=bool, help=' When using distributed training, the value of the flag find_unused_parameters passed to DistributedDataParallel')
     parser.add_argument('--train_file', default='')
+    parser.add_argument('--eval_file', default='')
     parser.add_argument('--evaluate', default=False, type=bool)
     parser.add_argument('--training_mode', default='pretrain')
     args = parser.parse_args()
