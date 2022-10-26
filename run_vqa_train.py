@@ -29,7 +29,7 @@ import utils
 def train(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device, scheduler, config, args):
     # train
     model.train()  
-    if args.mode == 'pretrain':
+    if args.training_mode == 'pretrain':
         metric_logger = utils.MetricLogger(delimiter="  ")
         metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
         metric_logger.add_meter('loss_mlm', utils.SmoothedValue(window_size=50, fmt='{value:.4f}'))
@@ -76,7 +76,7 @@ def train(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device,
         metric_logger.synchronize_between_processes()
         print("Averaged stats:", metric_logger.global_avg())     
         return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}  
-    elif args.mode == 'finetune':
+    elif args.training_mode == 'finetune':
         metric_logger = utils.MetricLogger(delimiter="  ")
         metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
         metric_logger.add_meter('loss_mlm', utils.SmoothedValue(window_size=50, fmt='{value:.4f}'))
@@ -249,6 +249,7 @@ if __name__ == '__main__':
     parser.add_argument('--find_unused_parameters', default=False, type=bool, help=' When using distributed training, the value of the flag find_unused_parameters passed to DistributedDataParallel')
     parser.add_argument('--train_file', default='')
     parser.add_argument('--evaluate', default=False, type=bool)
+    parser.add_argument('--training_mode', default='pretrain')
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
