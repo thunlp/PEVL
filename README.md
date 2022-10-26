@@ -31,10 +31,9 @@ Please refer to [INSTALL](INSTALL.md).
 ## Pretraining Instructions
 Before pretraining, we initialize PEVL's weights with the parameters of **[ALBEF\[14M\]](https://storage.googleapis.com/sfr-pcl-data-research/ALBEF/ALBEF.pth)**
 
-Our raw pretraining corpus is from **[Visual Commonsense Reasoning(VCR)](https://visualcommonsense.com/download/)** and **[MDETR](https://arxiv.org/abs/2104.12763)** that collects images from Flickr30k entities, COCO, Visual Genome datasets. However, differently from MDETR, we split the sentences rather than use the combination of them.
+Our raw pretraining corpus is from **[Visual Commonsense Reasoning(VCR)](https://visualcommonsense.com/download/)** and **[MDETR](https://arxiv.org/abs/2104.12763)** that collects images from Flickr30k entities, COCO, Visual Genome datasets. 
 - **[MDETR Data](https://zenodo.org/record/4729015/files/mdetr_annotations.tar.gz?download=1)**
-- Download VCR data from the original websites.
-
+- Download VCR data from the original websites **[VCR](https://visualcommonsense.com/download/)**.
 
 ## Second Stage Pre-training and Fine-tuning
 You can download our first-stage pre-training model from **[pre-trained pevl](https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_pretrain.pth)**. We conduct second stage pre-training and fine-tuning for all downstream tasks.
