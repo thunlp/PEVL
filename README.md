@@ -94,8 +94,9 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=12451 --use_
 
 ### Visual Commonsense Reasoning (VCR)
 1. <a href="https://thunlp.oss-cLn-qingdao.aliyuncs.com/pevl_vcr_ssp.pth"> Second-stage pre-trained checkpoint </a> for visual commonsense reasoning.
-2. Download PEVL's VCR dataset json files from <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr.tar.gz"> vcr data </a> and images for visual commonsense reasoning from original websites <a href="https://visualcommonsense.com/download/"> VCR </a>.
-3. In configs/vcr.yaml, set the paths for the json files and vcr images.
+2. <a href="https://thunlp.oss-cLn-qingdao.aliyuncs.com/pevl_vcr_finetune.pth"> Fine-tuned checkpoint </a> for visual commonsense reasoning.
+3. Download PEVL's VCR dataset json files from <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_vcr.tar.gz"> vcr data </a> and images for visual commonsense reasoning from original websites <a href="https://visualcommonsense.com/download/"> VCR </a>.
+4. In configs/vcr.yaml, set the paths for the json files and vcr images.
 
 ### Visual Question Answering (GQA)
 1. Download PEVL's GQA dataset json files from <a href="https://thunlp.oss-cn-qingdao.aliyuncs.com/pevl_gqa_data.tar.gz"> pevl_gqa</a> and images for GQA from original websites <a href="https://cs.stanford.edu/people/dorarad/gqa/download.html"> GQA </a>.
