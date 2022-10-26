@@ -58,7 +58,7 @@ def train(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device,
                 alpha = config['alpha']
             else:
                 alpha = config['alpha']*min(1,i/len(data_loader))
-            loss_mlm, loss_soft, loss_ita, loss_itm = model(image=image, text=text_input, text_mask=mask_text_input, alpha = alpha, mode=args.mode)  
+            loss_mlm, loss_soft, loss_ita, loss_itm = model(image=image, text=text_input, text_mask=mask_text_input, alpha = alpha, mode=args.training_mode)  
             loss =  loss_soft + loss_mlm + loss_ita + loss_itm
             loss.backward()
             optimizer.step()    
@@ -102,7 +102,7 @@ def train(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device,
                 alpha = config['alpha']
             else:
                 alpha = config['alpha']*min(1,i/len(data_loader))
-            loss = model(image=image, text=text_input, text_mask=mask_text_input, alpha = alpha, mode=args.mode)  
+            loss = model(image=image, text=text_input, text_mask=mask_text_input, alpha = alpha, mode=args.training_mode)  
             loss.backward()
             optimizer.step()    
             
