@@ -20,7 +20,6 @@ class GQA_train_dataset(Dataset):
             print(f)
             self.ann += json.load(open(f,'r'))
         print(len(self.ann))
-        self.image_dict=json.loa
         self.image_path=image_path
         self.answer_dict=answer_dict
         self.tokenizer=tokenizer
