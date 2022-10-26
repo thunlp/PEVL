@@ -46,11 +46,6 @@ def train(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device,
 
         for i, (image, text, mask_caption) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
             optimizer.zero_grad()
-            if epoch == 0:
-                if i%100==0:
-                    print(text[:4])
-                    print('\nmask\n')
-                    print(mask_caption[:4])
             image = image.to(device,non_blocking=True) 
             text_input = tokenizer(text, padding='longest', truncation=True, max_length=200, return_tensors="pt").to(device)  
             mask_text_input = tokenizer(mask_caption, padding='longest', truncation=True, max_length=200, return_tensors="pt").to(device)
@@ -90,11 +85,6 @@ def train(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device,
 
         for i, (image, text, mask_caption) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
             optimizer.zero_grad()
-            if epoch == 0:
-                if i%100==0:
-                    print(text[:4])
-                    print('\nmask\n')
-                    print(mask_caption[:4])
             image = image.to(device,non_blocking=True) 
             text_input = tokenizer(text, padding='longest', truncation=True, max_length=200, return_tensors="pt").to(device)  
             mask_text_input = tokenizer(mask_caption, padding='longest', truncation=True, max_length=200, return_tensors="pt").to(device)
