@@ -23,7 +23,7 @@ from scheduler import create_scheduler
 from optim import create_optimizer
 from models.model_vqa import PEVL_VQA
 from dataset.vqa_dataset import GQA_train_dataset, GQA_val_dataset
-from eval import gqa_val
+from eval.eval import gqa_val
 import utils
 
 def train(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device, scheduler, config, args):
