@@ -123,20 +123,21 @@ class GQA_train_dataset(Dataset):
 
 
 
+
 class GQA_val_dataset(Dataset):
-    def __init__(self, ann_file, max_words=200, horizontal=True, resize_ratio=0.25,img_res=None):        
+    def __init__(self, ann_file, max_words=200, resize_ratio=0.25,img_res=None, image_path=None):        
         self.ann = []
         for f in ann_file:
             print(f)
             self.ann += json.load(open(f,'r'))
         self.img_res = img_res
+        self.image_path = image_path
         normalize = transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711))
         self.final_transform = transforms.Compose([ 
             transforms.ToTensor(),\
             normalize,\
         ])
         self.max_words = max_words
-        self.aug_transform = Augfunc(True, resize_ratio, )
         self.pos_dict = {x:f"[pos_{x}]" for x in range(512)}
 
     def __len__(self):
@@ -201,6 +202,7 @@ class GQA_val_dataset(Dataset):
         return image, seq_input, answer, torch.tensor(int(q_id))
 
 
+    
 
 class Augfunc(object):
     def __init__(self, horizontal=True, resize_ratio=0.25, img_res=None):
