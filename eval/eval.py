@@ -54,11 +54,12 @@ def vcr_validate(model, data_loader, tokenzier, device, setting):
 
 
 @torch.no_grad()
-def gqa_test(model, data_loader, tokenizer, device, answer_dict_path):
+def gqa_val(model, data_loader, tokenizer, device, answer_dict_path):
     model.eval()
     test_results = []
     results = []
     all_answer_dict = json.load(open(answer_dict_path))
+    # all_answer_dict = json.load(open('/mnt/sfs_turbo/chenqianyu/albef_downstream_tasks/gqa/gqa_1853_idx_to_answer_dict.json','r'))
     gqa_answer_list = []
     for x in range(len(all_answer_dict)):
         gqa_answer_list.append(all_answer_dict[str(x)])
@@ -85,9 +86,9 @@ def gqa_test(model, data_loader, tokenizer, device, answer_dict_path):
         input_ids = text_input.input_ids.clone()
         labels = input_ids.clone()
         probability_matrix = torch.full(labels.shape, model.mlm_probability)
-        input_ids, labels, masked_indices = model.answer_mask(input_ids, input_ids, model.text_encoder.config.vocab_size,\
-                                    image.device, 0, targets=labels,
-                                    probability_matrix = probability_matrix)
+        input_ids, labels, masked_indices = model.answer_mask(input_ids, input_ids, 
+                                                            targets=labels,
+                                                            probability_matrix = probability_matrix)
         mlm_output = model.text_encoder(input_ids, 
                                     attention_mask = text_input.attention_mask,
                                     encoder_hidden_states = image_embeds,
@@ -132,6 +133,6 @@ def gqa_test(model, data_loader, tokenizer, device, answer_dict_path):
     print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     # print('total num: 26534.0 test result for Q2A in VCR: 71.3%')
     print('+                                                     +')
-    print('                GQA VAL ACC{}%'.format(round(len(results)*100 / len(test_results), 2)) )
+    print('                GQA VAL ACC: {}%'.format(round(len(results)*100 / len(test_results), 2)) )
     print('+                                                     +')
     print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n')
