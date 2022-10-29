@@ -257,7 +257,7 @@ class PEVL_VQA(nn.Module):
 
             probability_matrix = torch.full(labels.shape, self.mlm_probability) 
 
-            input_ids, labels = self.answer_mask(input_ids, text_mask_input_ids, targets=labels, probability_matrix = probability_matrix)
+            input_ids, labels, masked_indices = self.answer_mask(input_ids, text_mask_input_ids, targets=labels, probability_matrix = probability_matrix)
             mlm_output = self.text_encoder(input_ids, 
                                         attention_mask = text.attention_mask,
                                         encoder_hidden_states = image_embeds,
@@ -280,7 +280,7 @@ class PEVL_VQA(nn.Module):
         if targets is not None:
             targets[~masked] = -100
         if targets is not None:
-            return input_ids, targets
+            return input_ids, targets, masked_indices
         else:
             return input_ids
 
