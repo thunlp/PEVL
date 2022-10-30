@@ -216,7 +216,7 @@ def main(args, config):
         if utils.is_main_process():
             val_dataset = [GQA_val_dataset(config[args.eval_file], img_res=config['image_res'], image_path=config['image_path'],)] 
             val_data_loader = create_loader(val_dataset, [None], batch_size=[config['test_batch_size']], num_workers=[4], is_trains=[False], collate_fns=[None])[0]
-            gqa_val(model, val_data_loader, tokenizer, device, config['answer_dict_path'])
+            gqa_val(model.module, val_data_loader, tokenizer, device, config['answer_dict_path'])
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str)) 
