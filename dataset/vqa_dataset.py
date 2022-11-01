@@ -52,10 +52,6 @@ class GQA_train_dataset(Dataset):
             seq = ann['question']
             tokens2bbox={}
             for tokens, bbox in zip(ann['tokens_positive'], ann['bbox_list']):
-                if seq[tokens[0]:tokens[1]] in ['What','Who','Where','which','Which','what','where','who','Who i','do','Do']:
-                    token_id = str(tokens[0])+str(tokens[1])
-                    tokens2bbox[token_id] = '  '
-                    continue
                 token_id = str(tokens[0])+str(tokens[1])
                 pos_seq = ['  @@ ']
                 bbox_512 = [int(xy*512/self.img_res) if int(xy*512/self.img_res) <=511 else 511  for xy in bbox ]
@@ -159,10 +155,6 @@ class GQA_val_dataset(Dataset):
             seq = ann['question'] 
             tokens2bbox={}
             for tokens, bbox in zip(ann['tokens_positive'], ann['bbox_list']):
-                if seq[tokens[0]:tokens[1]] in ['What','Who','Where','which','Which','what','where','who','Who i','do','Do']:
-                    token_id = str(tokens[0])+str(tokens[1])
-                    tokens2bbox[token_id] = '  '
-                    continue
                 token_id = str(tokens[0])+str(tokens[1])
                 pos_seq = ['  @@ ']
                 bbox_512 = [int(xy*512/self.img_res) if int(xy*512/self.img_res) <=511 else 511  for xy in bbox ]
