@@ -225,7 +225,7 @@ def main(args, config):
     model_without_ddp = model
 
     if args.distributed:
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=args.find_unused_parameters)
         model_without_ddp = model.module    
     
     print("Start training")
@@ -281,6 +281,7 @@ if __name__ == '__main__':
     parser.add_argument('--distributed', default=True, type=bool)
     parser.add_argument('--training_mode', default='pretrain')
     parser.add_argument('--dataload_mode', default='pevl')
+    parser.add_argument('--find_unused_parameters', default=False, type=bool, help='When using distributed training, the value of the flag find_unused_parameters passed to DistributedDataParallel')
     parser.add_argument('--eval_step', default=1, type=int, help='Number of update steps between two evaluations') 
     parser.add_argument('--gradient_accumulation_steps', default=1, type=int, help='Number of updates steps to accumulate the gradients for, before performing a backward/update pass')
     args = parser.parse_args()
